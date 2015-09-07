@@ -1,0 +1,25 @@
+# Ez a fájl tartalmazza az adatbázis beállításait.
+# Azok a sorok melyek # jellel kezdődnek nem kerülnek feldolgozásra.
+# Az itt szereplő változók és jeletéseik a következőek:
+#
+# databaseRoot       : az adatbázist tartalmazó könyvtár,
+#                      ehhez viszonyítva kell megadni a többi változó értékét,
+# basePrice          : speciális időszakon kívül eső időszak díját tartalmazó fájl,
+# interval           : speciális időtartamokat tartalmazó fájl,
+# serviceTypes       : kapacitás típusa szerinti díjazásokat tartalmazó fájl,
+# accessPointClasses : gázátadó állomások típus szerinti díjazást tartalmazó fájl,
+# accessPoints       : gázátadó állomásokat és azok típusát tartalmazó fájl,
+# contracts          : megkötött szerződések adat fájljait tartalmazó mappa.
+#
+
+databaseRoot = database
+
+basePrice = basePrice.csv
+intervals = intervals.csv
+serviceTypes = serviceTypes.csv
+
+accessPointClasses = accessPointClasses.csv
+accessPoints = accessPoints.csv
+
+contracts = contracts
+outputs = contracts/results
