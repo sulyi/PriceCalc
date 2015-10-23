@@ -5,6 +5,7 @@
 
 package pricecalc.utils;
 
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -18,58 +19,27 @@ import java.util.Map;
 
 public class CSVRecord {
     
-    private final Map<String, Integer> keys;
-    protected final String format;
-    private final SimpleDateFormat dateFormat;
-    private final NumberFormat floatFormat;
-    
-    private final CSVField[] fields;
+    private final CSVFileHandler handler;
+            
+    protected final CSVField[] fields;
 
     public CSVRecord(final String[] values,
-                     final Map<String, Integer> keys,
-                     final String dataFormat,
-                     final SimpleDateFormat dateFormat,
-                     final NumberFormat floatFormat) throws CSVException {
+                     final CSVFileHandler handler) throws CSVException {
         
-        this.keys = keys;
-        this.format = dataFormat;
-        this.dateFormat = dateFormat;
-        this.floatFormat = floatFormat;
-
+        this.handler = handler.clone();
+        
         this.fields = parse(values);
     }
     
-    public CSVRecord(final CSVField[] values,
-                     final Map<String, Integer> keys) {
-
-        this.keys = keys;
-        this.dateFormat = null;
-        this.floatFormat = null;
-
+    public CSVRecord(final CSVField[] values, CSVFileHandler handler) {
+        this.handler = handler;
+        if (values.length != handler.getDataFormat().length())
+            throw new IllegalArgumentException("Number of fielsd does not match length of handler's format");
         this.fields = values;
-        
-        String fieldFormat = "";
-        String debug;
-        
-        for (CSVField f : fields){
-            debug = f.getValueClass().getName();
-            switch (debug){
-                case "java.lang.String":
-                    fieldFormat += 'S';
-                    break;
-                case "java.lang.Float":
-                    fieldFormat += 'N';
-                    break;
-                case "java.util.Date":
-                    fieldFormat += 'D';
-            }
-        }
-        
-        this.format = fieldFormat;
-        
     }
 
     public CSVField get(final String key) {
+        Map<String, Integer> keys = handler.getHeader();
         Integer index = keys.get(key);
         if (index == null) {
             throw new IllegalArgumentException(String.format(
@@ -89,8 +59,15 @@ public class CSVRecord {
         return fields[i];
     }
     
-
+    public void set(final String key, CSVField value) {
+        fields[handler.getHeader().get(key)] = value;
+    }
+    
     public final CSVField[] parse(final String[] values) throws CSVException {
+        String format = handler.getDataFormat();
+        NumberFormat floatFormat = handler.getFloatFormat();
+        SimpleDateFormat dateFormat = handler.getDateFormat();
+        
         CSVField[] out = new CSVField[values.length];
         CSVField curr;
         char type;
@@ -99,13 +76,17 @@ public class CSVRecord {
             try {
                 type = format.charAt(i);
                 try{
-                    // TODO: CSVFileHandler.format újragondolni
+                    // TODO: CSVFileHandler.print újragondolni
                     switch (type) {
                         case 'S':
                             curr = new CSVField<>(values[i]);
                             break;
                         case 'N':
                             curr = new CSVField<>(floatFormat.parse(values[i]).floatValue());
+                            break;
+                        case 'C':
+                            curr = new CSVField<>(BigDecimal.valueOf(
+                                     floatFormat.parse(values[i]).doubleValue()));
                             break;
                         case 'D':
                             curr = new CSVField<>(dateFormat.parse(values[i]));
@@ -127,4 +108,35 @@ public class CSVRecord {
         }
         return out;
     }
+    
+    public String toStringField(String key){
+        CSVField field = get(key);
+        Map<String, Integer> keys = handler.getHeader();
+        
+        char type = handler.getDataFormat().charAt(keys.get(key));
+        switch (type) {
+            case 'S':
+                return (String) field.valueOf();
+            case 'N':
+                return handler.getFloatFormat().format(field.valueOf());
+            case 'C':
+                return handler.getFloatFormat().format(
+                        BigDecimal.valueOf((Float) field.valueOf()));
+            case 'D':
+                return handler.getDateFormat().format(field.valueOf());
+            default:
+                return new String();
+        }
+    }
+    
+    public String[] toStringArray(){
+        String[] out = new String[fields.length];
+        Map<Integer, String> rHeader = handler.reverseHeader();
+        
+        for (int i = 0; i < rHeader.size(); i++) {
+            out[i] = toStringField(rHeader.get(i));
+        }
+        return out;
+    }
+    
 }

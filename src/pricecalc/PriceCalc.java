@@ -12,7 +12,7 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
-import java.nio.file.Files;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
@@ -60,13 +60,14 @@ public class PriceCalc {
     
     public UI userInterface;
     
-    private final static String defaultConfigFile = "/config.property";
+    private final static String defaultConfigFile =  File.separatorChar + "config.property";
     private static String rootDir;
     
     protected void initConfig() {
         this.loadConfig(this.getClass().getResourceAsStream(defaultConfigFile));
         
-        File targetConfigFile = new File(rootDir + "/config.ini");
+        
+        File targetConfigFile = new File(rootDir + File.separatorChar + "config.ini");
         try (OutputStream configOutStream = new FileOutputStream(targetConfigFile);
              InputStream configInStream = PriceCalc.class.getResourceAsStream(defaultConfigFile)){
             byte[] buffer = new byte[8 * 1024];
@@ -76,7 +77,8 @@ public class PriceCalc {
                 configOutStream.write(buffer, 0, bytesRead);
             }
         } catch (IOException ex) {
-            this.userInterface.showError("Nem lehet létrehozni a "+rootDir+"/config.ini fájt");
+            this.userInterface.showError("Nem lehet létrehozni a " + rootDir +
+                                          File.separatorChar + "config.ini fájt");
         }
         
     }
@@ -96,7 +98,7 @@ public class PriceCalc {
             throw new NullPointerException();
         }
         
-        // itt akár egy jelenleg 7 hosszú tömböt és egy hibaszámlálót is
+        // itt akár egy (jelenleg 7 hosszú) tömböt és egy hibaszámlálót is
         // létre lehetne hozni, és csak egy hibaüzenetetet dobni,
         // de szerintem ez így mégis használhatóbb, mint egy hosszú üzenet
         
@@ -199,7 +201,7 @@ public class PriceCalc {
             throw new DatabaseException();
         }
         try {
-            handler.setDataFormat("SNSS");
+            handler.setDataFormat("SCSS");
             apClasses = handler.parse(dbAPClassTab);
         } catch (IOException ex) {
             this.userInterface.showError(dbAPClassTab.getName() + " fájlt nem lehetett megnyitni");
@@ -224,14 +226,17 @@ public class PriceCalc {
         
         if (dbOutputs.exists()) {
             if (!dbOutputs.isDirectory()) {
-                this.userInterface.showError(dbOutputs.getName()+" nem egy könyvtár");
+                this.userInterface.showError(dbOutputs.getName() + " nem egy könyvtár");
                 throw new DatabaseException();
             }
-        } else if (this.userInterface.askYesNo(dbOutputs+" nem létezik létre akarja hozni? (i/n)")){
+        } else if (this.userInterface.askYesNo(dbOutputs.getName()
+                + " mappa nem létezik. Létre akarja hozni?")){
             try {
-                Files.createDirectory(dbOutputs.toPath());
-            } catch (IOException ex) {
-                this.userInterface.showError("Nem lehetett létrehozni a "+dbOutputs.getName() + " könyvtárati");
+                dbOutputs.mkdir();
+                this.userInterface.showMessage("A mappa sikeresen léterejött.");
+            } catch (SecurityException ex) {
+                this.userInterface.showError("Nem lehetett létrehozni a " +
+                        dbOutputs.getName() + " könyvtárati");
                 throw new DatabaseException();
             }
         }else{
@@ -249,15 +254,15 @@ public class PriceCalc {
         Date from;
         Date to;
         String apServiceType;
-        Float yearQ;
-        Float dayQ;
+        Float yearQuantity;
+        Float dayQuantity;
 
-        Float intervalPrice;
-        Float serviceTypePrice;
+        Float intervalPriceRatio;
+        Float serviceTypePriceRatio;
         String apApClass;
-        Float apClassPrice;
-        Float Q;
-        String apClassQ;
+        BigDecimal apClassPrice;
+        Float quantity;
+        String apClassUnit;
         
         Map<String, Float> apSummerLookUp = new LinkedHashMap<>();
         Map<String, Float> apClassSummerLookUp = new LinkedHashMap<>();
@@ -277,19 +282,19 @@ public class PriceCalc {
         try {
             for (CSVRecord record : handler.parse(contract)){
                 
-                intervalPrice = basePrice;
-                serviceTypePrice = null;
+                intervalPriceRatio = basePrice;
+                serviceTypePriceRatio = null;
                 apApClass = null;
                 apClassPrice = null;
-                Q = null;
-                apClassQ = null;
+                quantity = null;
+                apClassUnit = null;
                 
                 apName =(String) record.get("Pont kódja").valueOf();
                 from = (Date) record.get("Érvényesség kezdete").valueOf();
                 to = (Date) record.get("Érvényesség vége").valueOf();
                 apServiceType = (String) record.get("Kapacitástípus").valueOf();
-                dayQ = (Float) record.get("Mennyiség MJ/nap").valueOf();
-                yearQ = (Float) record.get("Mennyiség MJ/óra").valueOf();
+                dayQuantity = (Float) record.get("Mennyiség MJ/nap").valueOf();
+                yearQuantity = (Float) record.get("Mennyiség MJ/óra").valueOf();
                 
                 if(!checkInterval(from, to)){
                     this.userInterface.showError(apName +
@@ -304,16 +309,16 @@ public class PriceCalc {
                     if(inInterval(from, to,
                                   (Date) interval.get("Időtartam kezdete").valueOf(),
                                   (Date) interval.get("Időtartam vége").valueOf(), true)){
-                        intervalPrice = (Float) interval.get("Ár százalék").valueOf();
+                        intervalPriceRatio = (Float) interval.get("Ár százalék").valueOf();
                     }
                 }
                 
                 for (CSVRecord serviceType : serviceTypes){
                     if ( apServiceType.equals((String) serviceType.get("Kapacitástípus").valueOf()))
-                        serviceTypePrice = (Float) serviceType.get("Ár százalék").valueOf();
+                        serviceTypePriceRatio = (Float) serviceType.get("Ár százalék").valueOf();
                 }
                 
-                if( serviceTypePrice == null ){
+                if( serviceTypePriceRatio == null ){
                     this.userInterface.showError(apName+" hozzáférésipont szolgáltatás típusához ("+
                             apServiceType+") nem találhatóak adatok a "+contract.getName()+" fájlban");
                     continue;
@@ -333,40 +338,45 @@ public class PriceCalc {
                 
                 for (CSVRecord apClass : apClasses) {
                     if (apApClass.equals((String) apClass.get("Pontcsoport").valueOf())) {
-                        apClassPrice = (Float) apClass.get("Ár").valueOf();
-                        apClassQ = (String) apClass.get("Mértékegység").valueOf();
+                        apClassPrice = (BigDecimal) apClass.get("Ár").valueOf();
+                        apClassUnit = (String) apClass.get("Mértékegység").valueOf();
                     }
                 }
                 
                 try{
-                    Q = (Float) record.get("Mennyiség " + apClassQ).valueOf();
+                    quantity = (Float) record.get("Mennyiség " + apClassUnit).valueOf();
                 } catch (IllegalArgumentException ex){
-                    this.userInterface.showError(apApClass+" hozzáférési típus mértékegységével (" +
-                            apClassQ + ") nincs megadva a lekötés mennyisége a "+contract.getName()+" fájlban");
+                    this.userInterface.showError(apApClass +
+                            " hozzáférési típus mértékegységével (" +
+                            apClassUnit + ") nincs megadva a lekötés mennyisége a " +
+                            contract.getName() + " fájlban");
                     continue;
                 }
                 
                 if (apSummerLookUp.containsKey(apName)){
                     sum = apSummerLookUp.get(apName);
-                    sum += apClassPrice * intervalPrice * serviceTypePrice * Q;
+                    sum += apClassPrice.floatValue() * intervalPriceRatio * serviceTypePriceRatio * quantity;
                     apSummerLookUp.put(apName, sum);
                 } else{
-                    apSummerLookUp.put(apName, apClassPrice * intervalPrice * serviceTypePrice * Q);
+                    apSummerLookUp.put(apName, apClassPrice.floatValue() * intervalPriceRatio * serviceTypePriceRatio * quantity);
                 }
                 
                 if (apClassSummerLookUp.containsKey(apApClass)) {
                     sum = apClassSummerLookUp.get(apApClass);
-                    sum += apClassPrice * intervalPrice * serviceTypePrice * Q;
+                    sum += apClassPrice.floatValue() * intervalPriceRatio * serviceTypePriceRatio * quantity;
                     apClassSummerLookUp.put(apApClass, sum);
                 } else {
-                    apClassSummerLookUp.put(apApClass, apClassPrice * intervalPrice * serviceTypePrice * Q);
+                    apClassSummerLookUp.put(apApClass, apClassPrice.floatValue() * intervalPriceRatio * serviceTypePriceRatio * quantity);
                 }
             }
-            
             apResult = new ArrayList<>();
+            
             resultHeader = new LinkedHashMap<>();
             resultHeader.put("Pont kódja", 0);
             resultHeader.put("Összeg", 1);
+            
+            handler.setDataFormat("SN");
+            handler.setHeader(resultHeader);
             
             sum = Float.valueOf(0);
             
@@ -375,12 +385,12 @@ public class PriceCalc {
                 sum += i;
                 apResult.add(new CSVRecord(new CSVField[]{new CSVField<>(key),
                                                           new CSVField<>(Float.valueOf(i))},
-                                           resultHeader));
+                                           handler));
             }
 
             apResult.add(new CSVRecord(new CSVField[]{new CSVField<>("Összesen"),
                                                       new CSVField<>(Float.valueOf(sum))},
-                                       resultHeader));
+                                       handler));
             
             outName = contract.getName();
             extPos = outName.lastIndexOf(".");
@@ -388,17 +398,15 @@ public class PriceCalc {
             if (extPos != -1)
                 outName = outName.substring(0, extPos);
             
-            handler.setDataFormat("SN");
-            handler.setHeader(resultHeader);
-            
             outFile = new File(dbOutputs, outName + "-result.csv");
             
             if (!outFile.exists() ||
-                this.userInterface.askYesNo(outName + "-result.csv létezik, felül akarja írni? (i/n)")) {
+                this.userInterface.askYesNo(outName + "-result.csv létezik, felül akarja írni?")) {
                 try {
                     handler.print(apResult, outFile);
                 } catch (CSVFormatException ex) {
-                    this.userInterface.showError("A kimeneti fájl "+ex.getLine()+" sorát nem sikerült formátumhoz igaítani" );
+                    this.userInterface.showError("A kimeneti fájl "
+                            + ex.getLine() + " sorát nem sikerült formátumhoz igaítani");
                 }
             }
 
@@ -406,6 +414,8 @@ public class PriceCalc {
             resultHeader = new LinkedHashMap<>();
             resultHeader.put("Pontcsoport", 0);
             resultHeader.put("Összeg", 1);
+            
+            handler.setHeader(resultHeader);
 
             sum = Float.valueOf(0);
 
@@ -414,19 +424,17 @@ public class PriceCalc {
                 sum += i;
                 apClassResult.add(new CSVRecord(new CSVField[]{new CSVField<>(key),
                                                                new CSVField<>(Float.valueOf(i))},
-                                                resultHeader));
+                                                handler));
             }
 
             apClassResult.add(new CSVRecord(new CSVField[]{new CSVField<>("Összesen"),
                                             new CSVField<>(Float.valueOf(sum))},
-                              resultHeader));
-
-            handler.setHeader(resultHeader);
+                              handler));
 
             outFile = new File(dbOutputs, outName + "-class-result.csv");
 
             if (!outFile.exists() ||
-                this.userInterface.askYesNo(outName + "-class-result.csv létezik, felül akarja írni? (i/n)")){
+                this.userInterface.askYesNo(outName + "-class-result.csv létezik, felül akarja írni?")){
                 try {
                     handler.print(apClassResult, outFile);
                 } catch (CSVFormatException ex) {
@@ -512,28 +520,36 @@ public class PriceCalc {
         calc.customNumberFormat = setNumberFormat(',', ' ', 1, 3, true);
         calc.customDateFormat = new SimpleDateFormat("yyyy-MM-dd");
         
-        calc.userInterface = new BasicUI();
+        calc.userInterface = new GUI(); //new BasicUI();
         calc.userInterface.start();
         
         // TODO: config fájl beállítása argumentumból
         //calc.parseArgs(args);
         
-        String configFileName = rootDir + "/config.ini";
+        String configFileName = rootDir + File.separatorChar + "config.ini";
         
         try (InputStream configStream = new FileInputStream(configFileName)){
             calc.loadConfig(configStream);
         } catch (IOException ex1) {
-            calc.userInterface.showError("Nem található a "+ rootDir+"/config.ini");
+            calc.userInterface.showError("Nem található a ." +
+                    File.separatorChar + "config.ini fájl.");
             try {
-                calc.initConfig();
+                if (calc.userInterface.askYesNo("Alapértelmezésbe akarja állítani a kofigurációs fájlt?")) {
+                    calc.initConfig();
+                    calc.userInterface.showMessage("A kofigurációs fájlt sikeresen alapértelmezésbe állt.");
+                }
             } catch (NullPointerException ex2) {
                 calc.userInterface.showError("Korrupt fájl: " + defaultConfigFile);
                 System.exit(2);
             }
         } catch (NullPointerException ex1) {
-            // initConfig?
             calc.userInterface.showError("Hibás konfigurációs fájl: " + configFileName);
-            System.exit(1);
+            if (calc.userInterface.askYesNo("Alapértelmezésbe akarja állítani a kofigurációs fájlt?")) {
+                calc.initConfig();
+                calc.userInterface.showMessage("A kofigurációs fájlt sikeresen alapértelmezésbe állt.");
+            } else {
+                System.exit(1);
+            }
         }
         
         // mehet-e tovább?

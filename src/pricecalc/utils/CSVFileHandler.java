@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  * @author arsene
  */
 
-public class CSVFileHandler {
+public class CSVFileHandler implements Cloneable {
     
     private String format;
     private SimpleDateFormat dateFormat;
@@ -100,11 +100,7 @@ public class CSVFileHandler {
                     }
                 }
                 
-                out.add(new CSVRecord(rawFields,
-                                      this.header,
-                                      this.format,
-                                      this.dateFormat,
-                                      this.floatFormat));
+                out.add(new CSVRecord(rawFields, this));
             } catch (CSVParseException ex) {
                 throw new CSVLineException(String.format(
                         "Couldn't parse line, because field %d can't be parsed to %c",
@@ -126,7 +122,6 @@ public class CSVFileHandler {
     }
     
     public void print(List<CSVRecord> data, File target) throws IOException, CSVFormatException{
-        String[] lines = new String[data.size()+1];
         String line;
         
         FileWriter fileWriter = new FileWriter(target.getAbsoluteFile());
@@ -138,53 +133,32 @@ public class CSVFileHandler {
         for (int i=1; i<rHeader.size(); i++) {
             line += this.sep+rHeader.get(i);
         }
-        lines[0] = line;
+        targetWriter.write(line, 0, line.length());
         
         CSVRecord record;
+        String[] recordStingFields;
         char type;
         
         for(int i=0;i<data.size();i++){
             record = data.get(i);
-            if (record.format == null ? this.format != null : !record.format.equals(this.format)){
+            // TODO: áttenni a CSVRecord-ba
+            if (record.fields.length != this.format.length()){
                throw new CSVFormatException("Line does not match format of file", i);
             }
-            type = this.format.charAt(0);
-            switch (type) {
-                case 'S':
-                    line = (String) record.get(rHeader.get(0)).valueOf();
-                    break;
-                case 'N':
-                    line = floatFormat.format(record.get(rHeader.get(0)).valueOf());
-                    break;
-                case 'D':
-                    line = dateFormat.format(record.get(rHeader.get(0)).valueOf());
-            }
-            for(int j=1; j<rHeader.size(); j++){
+            recordStingFields = record.toStringArray();
+            line = recordStingFields[0];
+            for (int j=1; j< recordStingFields.length; j++){
                 line += this.sep;
-                type = this.format.charAt(j);
-                switch (type){
-                    case 'S':
-                        line += record.get(rHeader.get(j)).valueOf();
-                        break;
-                    case 'N':
-                        line += floatFormat.format(record.get(rHeader.get(j)).valueOf());
-                        break;
-                    case 'D':
-                        line += dateFormat.format(record.get(rHeader.get(j)).valueOf());
-                }
+                line += recordStingFields[j];
             }
-            lines[i+1] = line;
+            targetWriter.newLine();
+            targetWriter.write(line, 0, line.length());
         }
         
-        for (int i=0; i<lines.length; i++) {
-            targetWriter.write(lines[i], 0, lines[i].length());
-            // rendszer függő
-            targetWriter.newLine();
-        }
         targetWriter.close();
     }
     
-    private Map<Integer, String> reverseHeader(){
+    protected Map<Integer, String> reverseHeader(){
         Map<Integer, String> rHeader = new LinkedHashMap<>();
         
         for(int i=0;i<this.header.size();i++){
@@ -282,4 +256,11 @@ public class CSVFileHandler {
         this.header = header;
     }
     
+    public CSVFileHandler clone() {
+        try {
+            return (CSVFileHandler) super.clone();
+        } catch (CloneNotSupportedException ex) {
+            return null;
+        }
+    }
 }

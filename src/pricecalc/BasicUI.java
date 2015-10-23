@@ -4,8 +4,6 @@
  */
 package pricecalc;
 
-import java.io.IOException;
-import java.util.Date;
 import java.util.Scanner;
 
 /**
@@ -37,10 +35,9 @@ public class BasicUI implements UI{
         Scanner scan = new Scanner(System.in);
 
         while (true){
-            
             System.out.print(msg);
+            yn = scan.nextLine().trim().toLowerCase();
             
-                yn = scan.nextLine().trim().toLowerCase();
             switch (yn) {
                 case "y":
                 case "i":
