@@ -34,6 +34,19 @@ public class GUI extends javax.swing.JFrame implements UI{
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jSplitPane1 = new javax.swing.JSplitPane();
+        jTabbedPaneContracts = new javax.swing.JTabbedPane();
+        jTannedPaneDB = new javax.swing.JTabbedPane();
+        jScrollPaneBasePrice = new javax.swing.JScrollPane();
+        jTableBasePrice = new javax.swing.JTable();
+        jScrollPaneIntervals = new javax.swing.JScrollPane();
+        jTableIntervals = new javax.swing.JTable();
+        jScrollPaneServiceTypes = new javax.swing.JScrollPane();
+        jTableServiceTypes = new javax.swing.JTable();
+        jScrollPaneApClasses = new javax.swing.JScrollPane();
+        jTableApClasses = new javax.swing.JTable();
+        jScrollPaneAps = new javax.swing.JScrollPane();
+        jTableAps = new javax.swing.JTable();
         menuBar = new javax.swing.JMenuBar();
         fileMenu = new javax.swing.JMenu();
         openMenuItem = new javax.swing.JMenuItem();
@@ -50,6 +63,33 @@ public class GUI extends javax.swing.JFrame implements UI{
         aboutMenuItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Ár kalkulátor");
+
+        jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        jSplitPane1.setRightComponent(jTabbedPaneContracts);
+
+        jScrollPaneBasePrice.setViewportView(jTableBasePrice);
+
+        jTannedPaneDB.addTab("Alap ár százalék", jScrollPaneBasePrice);
+
+        jScrollPaneIntervals.setViewportView(jTableIntervals);
+
+        jTannedPaneDB.addTab("Időszakok", jScrollPaneIntervals);
+
+        jScrollPaneServiceTypes.setViewportView(jTableServiceTypes);
+
+        jTannedPaneDB.addTab("Szolgáltatás típusok", jScrollPaneServiceTypes);
+
+        jScrollPaneApClasses.setViewportView(jTableApClasses);
+
+        jTannedPaneDB.addTab("Hozzáférési pont típusok", jScrollPaneApClasses);
+
+        jScrollPaneAps.setViewportView(jTableAps);
+
+        jTannedPaneDB.addTab("Hozzáférési pontok", jScrollPaneAps);
+
+        jSplitPane1.setLeftComponent(jTannedPaneDB);
+        jTannedPaneDB.getAccessibleContext().setAccessibleName("TabDB");
 
         fileMenu.setMnemonic('f');
         fileMenu.setText("File");
@@ -118,11 +158,11 @@ public class GUI extends javax.swing.JFrame implements UI{
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 518, Short.MAX_VALUE)
+            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 503, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 279, Short.MAX_VALUE)
+            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 392, Short.MAX_VALUE)
         );
 
         pack();
@@ -142,6 +182,19 @@ public class GUI extends javax.swing.JFrame implements UI{
     private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JMenu fileMenu;
     private javax.swing.JMenu helpMenu;
+    private javax.swing.JScrollPane jScrollPaneApClasses;
+    private javax.swing.JScrollPane jScrollPaneAps;
+    private javax.swing.JScrollPane jScrollPaneBasePrice;
+    private javax.swing.JScrollPane jScrollPaneIntervals;
+    private javax.swing.JScrollPane jScrollPaneServiceTypes;
+    private javax.swing.JSplitPane jSplitPane1;
+    private javax.swing.JTabbedPane jTabbedPaneContracts;
+    private javax.swing.JTable jTableApClasses;
+    private javax.swing.JTable jTableAps;
+    private javax.swing.JTable jTableBasePrice;
+    private javax.swing.JTable jTableIntervals;
+    private javax.swing.JTable jTableServiceTypes;
+    private javax.swing.JTabbedPane jTannedPaneDB;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JMenuItem openMenuItem;
     private javax.swing.JMenuItem pasteMenuItem;
@@ -149,6 +202,8 @@ public class GUI extends javax.swing.JFrame implements UI{
     private javax.swing.JMenuItem saveMenuItem;
     // End of variables declaration//GEN-END:variables
 
+    private Dimension jOptionPaneDim = new Dimension(410, 180);
+    
     @Override
     public void start() {
         /* Set the Nimbus look and feel */
@@ -194,7 +249,7 @@ public class GUI extends javax.swing.JFrame implements UI{
                 + msg + "</p></body></html>", JOptionPane.ERROR_MESSAGE);
         JDialog dialog = pane.createDialog("Hiba történt!");
         
-        dialog.setSize(new Dimension(410, 180));
+        dialog.setSize(jOptionPaneDim);
         dialog.setVisible(true);
         dialog.dispose();
     }
@@ -205,7 +260,7 @@ public class GUI extends javax.swing.JFrame implements UI{
                 + msg + "</p></body></html>", JOptionPane.INFORMATION_MESSAGE);
         JDialog dialog = pane.createDialog("Üzenet");
         
-        dialog.setSize(new Dimension(420, 180));
+        dialog.setSize(jOptionPaneDim);
         dialog.setVisible(true);
         dialog.dispose();
     }
@@ -217,10 +272,10 @@ public class GUI extends javax.swing.JFrame implements UI{
                 JOptionPane.YES_NO_OPTION);
         JDialog dialog = pane.createDialog("Mi legyen a döntés?");
         
-        dialog.setSize(new Dimension(420, 180));
+        dialog.setSize(jOptionPaneDim);
         dialog.setVisible(true);
         dialog.dispose();
         
-        return pane.getValue() == JOptionPane.YES_OPTION;
+        return (int) pane.getValue() == JOptionPane.YES_OPTION;
     }
 }

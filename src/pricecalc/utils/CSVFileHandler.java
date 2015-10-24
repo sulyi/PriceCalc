@@ -8,8 +8,10 @@ package pricecalc.utils;
 import java.io.File;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.IOException;
 
 import java.text.NumberFormat;
@@ -74,7 +76,8 @@ public class CSVFileHandler implements Cloneable {
     }
     
     public List<CSVRecord> parse(File source) throws IOException, CSVLineException{
-        BufferedReader sourceReader = new BufferedReader(new FileReader(source));
+        BufferedReader sourceReader = new BufferedReader(new InputStreamReader(
+                new FileInputStream(source), "UTF-8"));
         
         // rendszer független, akár egy fájlon belül is változhat a sor vég, akkor is müködik
         // elvileg
@@ -121,15 +124,14 @@ public class CSVFileHandler implements Cloneable {
         return out;
     }
     
-    public void print(List<CSVRecord> data, File target) throws IOException, CSVFormatException{
-        String line;
-        
-        FileWriter fileWriter = new FileWriter(target.getAbsoluteFile());
-        BufferedWriter targetWriter = new BufferedWriter(fileWriter);
+    public void print(List<CSVRecord> data, File target)
+            throws IOException, CSVFormatException{
+        BufferedWriter targetWriter = new BufferedWriter(new OutputStreamWriter(
+                new FileOutputStream(target), "UTF-8"));
         
         Map<Integer, String> rHeader = reverseHeader();
         
-        line = rHeader.get(0);
+        String line = rHeader.get(0);
         for (int i=1; i<rHeader.size(); i++) {
             line += this.sep+rHeader.get(i);
         }

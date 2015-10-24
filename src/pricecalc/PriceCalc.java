@@ -12,7 +12,9 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.net.URLDecoder;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
@@ -60,16 +62,15 @@ public class PriceCalc {
     
     public UI userInterface;
     
-    private final static String defaultConfigFile =  File.separatorChar + "config.property";
+    private final static String defaultConfigFile =  "/config.property";
     private static String rootDir;
     
     protected void initConfig() {
         this.loadConfig(this.getClass().getResourceAsStream(defaultConfigFile));
-        
-        
         File targetConfigFile = new File(rootDir + File.separatorChar + "config.ini");
+        
         try (OutputStream configOutStream = new FileOutputStream(targetConfigFile);
-             InputStream configInStream = PriceCalc.class.getResourceAsStream(defaultConfigFile)){
+            InputStream configInStream = PriceCalc.class.getResourceAsStream(defaultConfigFile)){
             byte[] buffer = new byte[8 * 1024];
             int bytesRead;
 
@@ -77,7 +78,7 @@ public class PriceCalc {
                 configOutStream.write(buffer, 0, bytesRead);
             }
         } catch (IOException ex) {
-            this.userInterface.showError("Nem lehet létrehozni a " + rootDir +
+            this.userInterface.showError("Nem lehet létrehozni a ." +
                                           File.separatorChar + "config.ini fájt");
         }
         
@@ -89,9 +90,9 @@ public class PriceCalc {
             throw new NullPointerException();
         }
         
-        Properties p = new Properties();
+        Properties config = new Properties();
         try {
-            p.load(configFileStream);
+            config.load(configFileStream);
             configFileStream.close();
         } catch (IOException ex) {
             this.userInterface.showError("A konfigurációs fájlt nem lehetett megnyitni");
@@ -106,50 +107,50 @@ public class PriceCalc {
         
         // TODO: ne állítsa azokat, amik argumentumból beállított
         try{
-            dbRoot = new File(rootDir, (String) p.get("databaseRoot"));
+            dbRoot = new File(rootDir, (String) config.get("databaseRoot"));
         } catch (NullPointerException ex) {
             this.userInterface.showError("Nem található meg a \"databaseRoot\" kulcs");
             allGood = false;
         }
         try {
-            dbBasePriceTab = new File(dbRoot, (String) p.get("basePrice") );
+            dbBasePriceTab = new File(dbRoot, (String) config.get("basePrice") );
         } catch (NullPointerException ex) {
             this.userInterface.showError("Nem található meg a \"basePrice\" kulcs");
             allGood = false;
         }
         try {
-            dbIntervalTab  = new File(dbRoot, (String) p.get("intervals"));
+            dbIntervalTab  = new File(dbRoot, (String) config.get("intervals"));
         } catch (NullPointerException ex) {
             this.userInterface.showError("Nem található meg az \"intervals\" kulcs");
             allGood = false;
         }
         try {
-            dbServTypeTab  = new File(dbRoot, (String) p.get("serviceTypes"));
+            dbServTypeTab  = new File(dbRoot, (String) config.get("serviceTypes"));
         } catch (NullPointerException ex) {
             this.userInterface.showError("Nem található meg a \"serviceTypes\" kulcs");
             allGood = false;
         }
         
         try {
-            dbAPTab        = new File(dbRoot, (String) p.get("accessPoints"));
+            dbAPTab        = new File(dbRoot, (String) config.get("accessPoints"));
             } catch (NullPointerException ex) {
             this.userInterface.showError("Nem található meg az \"accessPoints\" kulcs");
             allGood = false;
         }
         try {
-            dbAPClassTab   = new File(dbRoot, (String) p.get("accessPointClasses"));
+            dbAPClassTab   = new File(dbRoot, (String) config.get("accessPointClasses"));
             } catch (NullPointerException ex) {
             this.userInterface.showError("Nem található meg az \"accessPointClasses\" kulcs");
             allGood = false;
         }
         try {
-            dbContracts = new File(dbRoot, (String) p.get("contracts"));
+            dbContracts = new File(dbRoot, (String) config.get("contracts"));
         }catch(NullPointerException ex){
             this.userInterface.showError("Nem található meg a \"contracts\" kulcs");
              allGood = false;
         }
         try {
-            dbOutputs = new File(dbRoot, (String) p.get("outputs"));
+            dbOutputs = new File(dbRoot, (String) config.get("outputs"));
         } catch (NullPointerException ex) {
             this.userInterface.showError("Nem található meg az \"outputs\" kulcs");
             allGood = false;
@@ -166,7 +167,7 @@ public class PriceCalc {
         handler = new CSVFileHandler("N", ";",
                 this.customDateFormat,
                 this.customNumberFormat);
-
+        
         try {
             basePrice = (Float) handler.parse(dbBasePriceTab).get(0).get("Ár százalék").valueOf();
         } catch (IOException ex) {
@@ -514,42 +515,57 @@ public class PriceCalc {
     }
     
     public static void main(String[] args) {
-        rootDir=new File(PriceCalc.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParent();
         PriceCalc calc = new PriceCalc();
-        // így a loadConfig-ban vagy parseArgs-ban is könyen lehetne állítani
-        calc.customNumberFormat = setNumberFormat(',', ' ', 1, 3, true);
-        calc.customDateFormat = new SimpleDateFormat("yyyy-MM-dd");
         
         calc.userInterface = new GUI(); //new BasicUI();
         calc.userInterface.start();
+        // így a loadConfig-ban vagy parseArgs-ban is könyen lehetne állítani
+        calc.customNumberFormat = setNumberFormat(',', ' ', 1, 3, true);
+        calc.customDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            rootDir = new File(URLDecoder.decode(PriceCalc.class.getProtectionDomain()
+                    .getCodeSource().getLocation().getPath(), "UTF-8")).getParent();
+        } catch (UnsupportedEncodingException ex) {
+            calc.userInterface.showError("Nem lehet dekódolni a program elérési útvonalát!");
+        }
         
         // TODO: config fájl beállítása argumentumból
         //calc.parseArgs(args);
         
-        String configFileName = rootDir + File.separatorChar + "config.ini";
+        String configFileName = File.separatorChar + "config.ini";
         
-        try (InputStream configStream = new FileInputStream(configFileName)){
+        try (InputStream configStream = new FileInputStream(rootDir + configFileName)){
             calc.loadConfig(configStream);
         } catch (IOException ex1) {
             calc.userInterface.showError("Nem található a ." +
-                    File.separatorChar + "config.ini fájl.");
+                    configFileName + " fájl.");
             try {
                 if (calc.userInterface.askYesNo("Alapértelmezésbe akarja állítani a kofigurációs fájlt?")) {
                     calc.initConfig();
-                    calc.userInterface.showMessage("A kofigurációs fájlt sikeresen alapértelmezésbe állt.");
+                    calc.userInterface.showMessage("A kofigurációs fájl sikeresen alapértelmezésbe állt.");
+                } else {
+                    System.exit(1);
                 }
             } catch (NullPointerException ex2) {
-                calc.userInterface.showError("Korrupt fájl: " + defaultConfigFile);
+                calc.userInterface.showError("Korrupt fájl: ." + defaultConfigFile);
                 System.exit(2);
             }
+            
         } catch (NullPointerException ex1) {
             calc.userInterface.showError("Hibás konfigurációs fájl: " + configFileName);
-            if (calc.userInterface.askYesNo("Alapértelmezésbe akarja állítani a kofigurációs fájlt?")) {
-                calc.initConfig();
-                calc.userInterface.showMessage("A kofigurációs fájlt sikeresen alapértelmezésbe állt.");
-            } else {
-                System.exit(1);
+            
+            try {
+                if (calc.userInterface.askYesNo("Alapértelmezésbe akarja állítani a kofigurációs fájlt?")) {
+                    calc.initConfig();
+                    calc.userInterface.showMessage("A kofigurációs fájl sikeresen alapértelmezésbe állt.");
+                } else {
+                    System.exit(1);
+                }
+            } catch (NullPointerException ex2) {
+                calc.userInterface.showError("Korrupt fájl: ." + defaultConfigFile);
+                System.exit(2);
             }
+            
         }
         
         // mehet-e tovább?

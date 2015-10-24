@@ -13,12 +13,12 @@ import java.util.Date;
 
 public interface UI {
     
-    abstract void start();
+    void start();
     
-    abstract void showError(String msg);
+    void showError(String msg);
     
-    abstract void showMessage(String msg);
+    void showMessage(String msg);
     
-    abstract boolean askYesNo(String msg);
+    boolean askYesNo(String msg);
     
 }
