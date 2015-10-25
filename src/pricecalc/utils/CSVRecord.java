@@ -27,13 +27,12 @@ public class CSVRecord {
                      final CSVFileHandler handler) throws CSVException {
         
         this.handler = handler.clone();
-        
         this.fields = parse(values);
     }
     
-    public CSVRecord(final CSVField[] values, CSVFileHandler handler) {
-        this.handler = handler;
-        if (values.length != handler.getDataFormat().length())
+    public CSVRecord(final CSVField[] values, final CSVFileHandler handler) {
+        this.handler = handler.clone();
+        if (values.length != handler.getDataFormat().length)
             throw new IllegalArgumentException("Number of fielsd does not match length of handler's format");
         this.fields = values;
     }
@@ -64,31 +63,31 @@ public class CSVRecord {
     }
     
     public final CSVField[] parse(final String[] values) throws CSVException {
-        String format = handler.getDataFormat();
+        CSVType[] format = handler.getDataFormat();
         NumberFormat floatFormat = handler.getFloatFormat();
         SimpleDateFormat dateFormat = handler.getDateFormat();
         
         CSVField[] out = new CSVField[values.length];
         CSVField curr;
-        char type;
+        CSVType type;
         
         for (int i=0,l=0; i<values.length; l+=values[i++].length()) {
             try {
-                type = format.charAt(i);
+                type = format[i];
                 try{
                     // TODO: CSVFileHandler.print újragondolni
                     switch (type) {
-                        case 'S':
+                        case STRING:
                             curr = new CSVField<>(values[i]);
                             break;
-                        case 'N':
+                        case NUMBER:
                             curr = new CSVField<>(floatFormat.parse(values[i]).floatValue());
                             break;
-                        case 'C':
+                        case CURRENCY:
                             curr = new CSVField<>(BigDecimal.valueOf(
                                      floatFormat.parse(values[i]).doubleValue()));
                             break;
-                        case 'D':
+                        case DATE:
                             curr = new CSVField<>(dateFormat.parse(values[i]));
                             break;
                         default:
@@ -109,20 +108,25 @@ public class CSVRecord {
         return out;
     }
     
-    public String toStringField(String key){
-        CSVField field = get(key);
+    public String toStringField(String key) {
         Map<String, Integer> keys = handler.getHeader();
+        Integer index = keys.get(key);
+        return toStringField(index);
+    }
+    
+    public String toStringField(int i){
+        CSVField field = get(i);
         
-        char type = handler.getDataFormat().charAt(keys.get(key));
+        CSVType type = handler.getDataFormat()[i];
         switch (type) {
-            case 'S':
+            case STRING:
                 return (String) field.valueOf();
-            case 'N':
+            case NUMBER:
                 return handler.getFloatFormat().format(field.valueOf());
-            case 'C':
+            case CURRENCY:
                 return handler.getFloatFormat().format(
-                        BigDecimal.valueOf((Float) field.valueOf()));
-            case 'D':
+                        ((BigDecimal) field.valueOf()).doubleValue());
+            case DATE:
                 return handler.getDateFormat().format(field.valueOf());
             default:
                 return new String();
@@ -131,10 +135,10 @@ public class CSVRecord {
     
     public String[] toStringArray(){
         String[] out = new String[fields.length];
-        Map<Integer, String> rHeader = handler.reverseHeader();
+        String[] rHeader = handler.getHeaderToStringArray();
         
-        for (int i = 0; i < rHeader.size(); i++) {
-            out[i] = toStringField(rHeader.get(i));
+        for (int i = 0; i < rHeader.length; i++) {
+            out[i] = toStringField(rHeader[i]);
         }
         return out;
     }

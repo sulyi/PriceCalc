@@ -4,7 +4,7 @@
 #
 # databaseRoot       : az adatbázist tartalmazó könyvtár,
 #                      ehhez viszonyítva kell megadni a többi változó értékét,
-# basePrice          : speciális időszakon kívül eső időszak díját tartalmazó fájl,
+# basePriceRatio     : speciális időszakon kívül eső időszak díját tartalmazó fájl,
 # interval           : speciális időtartamokat tartalmazó fájl,
 # serviceTypes       : kapacitás típusa szerinti díjazásokat tartalmazó fájl,
 # accessPointClasses : gázátadó állomások típus szerinti díjazást tartalmazó fájl,
@@ -14,7 +14,7 @@
 
 databaseRoot = database
 
-basePrice = basePrice.csv
+basePriceRatio = basePriceRatio.csv
 intervals = intervals.csv
 serviceTypes = serviceTypes.csv
 

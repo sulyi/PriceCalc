@@ -4,7 +4,9 @@
  */
 package pricecalc;
 
-import java.util.Date;
+import java.util.List;
+import pricecalc.utils.CSVFileHandler;
+import pricecalc.utils.CSVRecord;
 
 /**
  *
@@ -14,6 +16,18 @@ import java.util.Date;
 public interface UI {
     
     void start();
+    
+    void showBasePriceRatio(CSVFileHandler handler, List<CSVRecord> rows);
+    
+    void showIntervals(CSVFileHandler handler, List<CSVRecord> rows);
+    
+    void showServiceTypes(CSVFileHandler handler, List<CSVRecord> rows);
+    
+    void showApClasses(CSVFileHandler handler, List<CSVRecord> rows);
+    
+    void showAPs(CSVFileHandler handler, List<CSVRecord> rows);
+    
+    void showContract(CSVFileHandler handler, List<CSVRecord> rows, PriceCalc callback);
     
     void showError(String msg);
     

@@ -10,16 +10,16 @@ package pricecalc.utils;
  */
 
 class CSVParseException extends CSVException {
-    private final char type;
+    private final CSVType type;
     private final int index;
     
-    public CSVParseException(String msg, int fieldIndex, char type, int errorOffset){
+    public CSVParseException(String msg, int fieldIndex, CSVType type, int errorOffset){
         super(msg, errorOffset);
         this.index = fieldIndex;
         this.type = type;
     }
     
-    public final char getType(){
+    public final CSVType getType(){
         return this.type;
     }
     

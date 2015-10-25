@@ -4,7 +4,10 @@
  */
 package pricecalc;
 
+import java.util.List;
 import java.util.Scanner;
+import pricecalc.utils.CSVFileHandler;
+import pricecalc.utils.CSVRecord;
 
 /**
  *
@@ -14,6 +17,36 @@ public class BasicUI implements UI{
 
     @Override
     public void start() {
+    }
+    
+    @Override
+    public void showBasePriceRatio(CSVFileHandler handler, List<CSVRecord> rows) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+    
+    @Override
+    public void showIntervals(CSVFileHandler handler, List<CSVRecord> rows) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void showServiceTypes(CSVFileHandler handler, List<CSVRecord> rows) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void showApClasses(CSVFileHandler handler, List<CSVRecord> rows) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void showAPs(CSVFileHandler handler, List<CSVRecord> rows) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+    
+    @Override
+    public void showContract(CSVFileHandler handler, List<CSVRecord> rows, PriceCalc calculator) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
     
     @Override
@@ -52,5 +85,5 @@ public class BasicUI implements UI{
             
         }
     }
-    
+
 }

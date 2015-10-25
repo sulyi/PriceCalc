@@ -11,8 +11,17 @@
 package pricecalc;
 
 import java.awt.Dimension;
+import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.SwingUtilities;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableModel;
+import pricecalc.utils.CSVFileHandler;
+import pricecalc.utils.CSVRecord;
 
 /**
  *
@@ -34,19 +43,23 @@ public class GUI extends javax.swing.JFrame implements UI{
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jSplitPane1 = new javax.swing.JSplitPane();
-        jTabbedPaneContracts = new javax.swing.JTabbedPane();
+        jSplitPaneMain = new javax.swing.JSplitPane();
+        jPanelDB = new javax.swing.JPanel();
+        jToolBarDB = new javax.swing.JToolBar();
         jTannedPaneDB = new javax.swing.JTabbedPane();
-        jScrollPaneBasePrice = new javax.swing.JScrollPane();
-        jTableBasePrice = new javax.swing.JTable();
+        jScrollPaneBasePriceRatio = new javax.swing.JScrollPane();
+        jTableBasePriceRatio = new javax.swing.JTable();
         jScrollPaneIntervals = new javax.swing.JScrollPane();
         jTableIntervals = new javax.swing.JTable();
         jScrollPaneServiceTypes = new javax.swing.JScrollPane();
         jTableServiceTypes = new javax.swing.JTable();
         jScrollPaneApClasses = new javax.swing.JScrollPane();
         jTableApClasses = new javax.swing.JTable();
-        jScrollPaneAps = new javax.swing.JScrollPane();
-        jTableAps = new javax.swing.JTable();
+        jScrollPaneAPs = new javax.swing.JScrollPane();
+        jTableAPs = new javax.swing.JTable();
+        jPanelContractsResults = new javax.swing.JPanel();
+        jToolBarContractsResults = new javax.swing.JToolBar();
+        jTabbedPaneContractsResults = new javax.swing.JTabbedPane();
         menuBar = new javax.swing.JMenuBar();
         fileMenu = new javax.swing.JMenu();
         openMenuItem = new javax.swing.JMenuItem();
@@ -65,31 +78,74 @@ public class GUI extends javax.swing.JFrame implements UI{
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Ár kalkulátor");
 
-        jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-        jSplitPane1.setRightComponent(jTabbedPaneContracts);
+        jSplitPaneMain.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
-        jScrollPaneBasePrice.setViewportView(jTableBasePrice);
+        jToolBarDB.setFloatable(false);
+        jToolBarDB.setRollover(true);
 
-        jTannedPaneDB.addTab("Alap ár százalék", jScrollPaneBasePrice);
+        jTableBasePriceRatio.setModel(tableModelBasePriceRatio);
+        jScrollPaneBasePriceRatio.setViewportView(jTableBasePriceRatio);
 
+        jTannedPaneDB.addTab("Alap ár százalék", jScrollPaneBasePriceRatio);
+
+        jTableIntervals.setModel(tableModelBasePriceRatio);
         jScrollPaneIntervals.setViewportView(jTableIntervals);
 
         jTannedPaneDB.addTab("Időszakok", jScrollPaneIntervals);
 
+        jTableServiceTypes.setModel(tableModelBasePriceRatio);
         jScrollPaneServiceTypes.setViewportView(jTableServiceTypes);
 
         jTannedPaneDB.addTab("Szolgáltatás típusok", jScrollPaneServiceTypes);
 
+        jTableApClasses.setModel(tableModelBasePriceRatio);
         jScrollPaneApClasses.setViewportView(jTableApClasses);
 
         jTannedPaneDB.addTab("Hozzáférési pont típusok", jScrollPaneApClasses);
 
-        jScrollPaneAps.setViewportView(jTableAps);
+        jTableAPs.setModel(tableModelBasePriceRatio);
+        jScrollPaneAPs.setViewportView(jTableAPs);
 
-        jTannedPaneDB.addTab("Hozzáférési pontok", jScrollPaneAps);
+        jTannedPaneDB.addTab("Hozzáférési pontok", jScrollPaneAPs);
 
-        jSplitPane1.setLeftComponent(jTannedPaneDB);
+        javax.swing.GroupLayout jPanelDBLayout = new javax.swing.GroupLayout(jPanelDB);
+        jPanelDB.setLayout(jPanelDBLayout);
+        jPanelDBLayout.setHorizontalGroup(
+            jPanelDBLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jToolBarDB, javax.swing.GroupLayout.DEFAULT_SIZE, 919, Short.MAX_VALUE)
+            .addComponent(jTannedPaneDB, javax.swing.GroupLayout.DEFAULT_SIZE, 919, Short.MAX_VALUE)
+        );
+        jPanelDBLayout.setVerticalGroup(
+            jPanelDBLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelDBLayout.createSequentialGroup()
+                .addComponent(jToolBarDB, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jTannedPaneDB, javax.swing.GroupLayout.DEFAULT_SIZE, 125, Short.MAX_VALUE))
+        );
+
         jTannedPaneDB.getAccessibleContext().setAccessibleName("TabDB");
+
+        jSplitPaneMain.setLeftComponent(jPanelDB);
+
+        jToolBarContractsResults.setFloatable(false);
+        jToolBarContractsResults.setRollover(true);
+
+        javax.swing.GroupLayout jPanelContractsResultsLayout = new javax.swing.GroupLayout(jPanelContractsResults);
+        jPanelContractsResults.setLayout(jPanelContractsResultsLayout);
+        jPanelContractsResultsLayout.setHorizontalGroup(
+            jPanelContractsResultsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jToolBarContractsResults, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 919, Short.MAX_VALUE)
+            .addComponent(jTabbedPaneContractsResults, javax.swing.GroupLayout.DEFAULT_SIZE, 919, Short.MAX_VALUE)
+        );
+        jPanelContractsResultsLayout.setVerticalGroup(
+            jPanelContractsResultsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelContractsResultsLayout.createSequentialGroup()
+                .addComponent(jToolBarContractsResults, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jTabbedPaneContractsResults, javax.swing.GroupLayout.DEFAULT_SIZE, 292, Short.MAX_VALUE))
+        );
+
+        jSplitPaneMain.setRightComponent(jPanelContractsResults);
 
         fileMenu.setMnemonic('f');
         fileMenu.setText("File");
@@ -158,11 +214,11 @@ public class GUI extends javax.swing.JFrame implements UI{
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 503, Short.MAX_VALUE)
+            .addComponent(jSplitPaneMain, javax.swing.GroupLayout.DEFAULT_SIZE, 921, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 392, Short.MAX_VALUE)
+            .addComponent(jSplitPaneMain, javax.swing.GroupLayout.DEFAULT_SIZE, 491, Short.MAX_VALUE)
         );
 
         pack();
@@ -182,19 +238,23 @@ public class GUI extends javax.swing.JFrame implements UI{
     private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JMenu fileMenu;
     private javax.swing.JMenu helpMenu;
+    private javax.swing.JPanel jPanelContractsResults;
+    private javax.swing.JPanel jPanelDB;
+    private javax.swing.JScrollPane jScrollPaneAPs;
     private javax.swing.JScrollPane jScrollPaneApClasses;
-    private javax.swing.JScrollPane jScrollPaneAps;
-    private javax.swing.JScrollPane jScrollPaneBasePrice;
+    private javax.swing.JScrollPane jScrollPaneBasePriceRatio;
     private javax.swing.JScrollPane jScrollPaneIntervals;
     private javax.swing.JScrollPane jScrollPaneServiceTypes;
-    private javax.swing.JSplitPane jSplitPane1;
-    private javax.swing.JTabbedPane jTabbedPaneContracts;
+    private javax.swing.JSplitPane jSplitPaneMain;
+    private javax.swing.JTabbedPane jTabbedPaneContractsResults;
+    private javax.swing.JTable jTableAPs;
     private javax.swing.JTable jTableApClasses;
-    private javax.swing.JTable jTableAps;
-    private javax.swing.JTable jTableBasePrice;
+    private javax.swing.JTable jTableBasePriceRatio;
     private javax.swing.JTable jTableIntervals;
     private javax.swing.JTable jTableServiceTypes;
     private javax.swing.JTabbedPane jTannedPaneDB;
+    private javax.swing.JToolBar jToolBarContractsResults;
+    private javax.swing.JToolBar jToolBarDB;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JMenuItem openMenuItem;
     private javax.swing.JMenuItem pasteMenuItem;
@@ -202,7 +262,10 @@ public class GUI extends javax.swing.JFrame implements UI{
     private javax.swing.JMenuItem saveMenuItem;
     // End of variables declaration//GEN-END:variables
 
-    private Dimension jOptionPaneDim = new Dimension(410, 180);
+    private Dimension jOptionPaneDim = new Dimension(420, 180);
+    
+    private DefaultTableModel tableModelBasePriceRatio = new DefaultTableModel(
+            new String[]{"valami"}, 0);
     
     @Override
     public void start() {
@@ -234,15 +297,111 @@ public class GUI extends javax.swing.JFrame implements UI{
         javax.swing.UIManager.put("OptionPane.okButtonText", "Rendben");
         javax.swing.UIManager.put("OptionPane.yesButtonText", "Igen");
         
+        SwingUtilities.updateComponentTreeUI(this);
+        
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
-
+            
+            @Override
             public void run() {
-                new GUI().setVisible(true);
+                setVisible(true);
             }
         });
     }
 
+    class CSVTableModel extends AbstractTableModel{
+        private final CSVFileHandler handler;
+        private List<CSVRecord> rows;
+        
+        public CSVTableModel(CSVFileHandler handler, List<CSVRecord> rows){
+            this.handler = handler;
+            this.rows = rows;
+        }
+
+        @Override
+        public int getRowCount() {
+            return rows.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return handler.getHeader().size();
+        }
+        
+        @Override
+        public String getColumnName(int columnIndex) {
+            return handler.getHeaderToStringArray()[columnIndex];
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            return rows.get(rowIndex).toStringField(columnIndex);
+        }
+    }
+    
+    @Override
+    public void showBasePriceRatio(CSVFileHandler handler, List<CSVRecord> rows) {
+        jTableBasePriceRatio.setModel(new CSVTableModel(handler, rows));
+    }
+    
+    
+    @Override
+    public void showIntervals(CSVFileHandler handler, List<CSVRecord> rows) {
+        jTableIntervals.setModel(new CSVTableModel(handler, rows));
+    }
+
+    @Override
+    public void showServiceTypes(CSVFileHandler handler, List<CSVRecord> rows) {
+        jTableServiceTypes.setModel(new CSVTableModel(handler, rows));
+    }
+
+    @Override
+    public void showApClasses(CSVFileHandler handler, List<CSVRecord> rows) {
+        jTableApClasses.setModel(new CSVTableModel(handler, rows));
+    }
+
+    @Override
+    public void showAPs(CSVFileHandler handler, List<CSVRecord> rows) {
+        jTableAPs.setModel(new CSVTableModel(handler, rows));
+    }
+    
+    @Override
+    public void showContract(final CSVFileHandler handler, final List<CSVRecord> rows, PriceCalc calculator) {
+        java.awt.EventQueue.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                JSplitPane jSplitPaneContractResult = new JSplitPane();
+                JScrollPane jScrollPaneContract = new JScrollPane();
+                JTable jTableContract = new JTable();
+                JScrollPane jScrollPaneResult = new JScrollPane();
+                JTable jTableResult = new JTable();
+
+                String name = handler.getFile().getName();
+                int extPos = name.lastIndexOf(".");
+
+                if (extPos != -1) {
+                    name = name.substring(0, extPos);
+                }
+
+                jTableContract.setModel(new CSVTableModel(handler, rows));
+                
+                jScrollPaneContract.setViewportView(jTableContract);
+                jScrollPaneResult.setViewportView(jTableResult);
+
+                jSplitPaneContractResult.setDividerLocation(95);
+                jSplitPaneContractResult.setOrientation(JSplitPane.VERTICAL_SPLIT);
+
+                jSplitPaneContractResult.setTopComponent(jScrollPaneContract);
+                jSplitPaneContractResult.setBottomComponent(jScrollPaneResult);
+
+
+                jTabbedPaneContractsResults.addTab(name, jSplitPaneContractResult);
+            }
+        });
+        
+    }
+    
     @Override
     public void showError(String msg) { 
         JOptionPane pane = new JOptionPane("<html><body><p style='width: 250px;'>"
@@ -270,12 +429,18 @@ public class GUI extends javax.swing.JFrame implements UI{
         JOptionPane pane = new JOptionPane("<html><body><p style='width: 250px;'>"
                 + msg + "</p></body></html>", JOptionPane.QUESTION_MESSAGE,
                 JOptionPane.YES_NO_OPTION);
-        JDialog dialog = pane.createDialog("Mi legyen a döntés?");
-        
-        dialog.setSize(jOptionPaneDim);
-        dialog.setVisible(true);
-        dialog.dispose();
-        
-        return (int) pane.getValue() == JOptionPane.YES_OPTION;
+        JDialog dialog;
+        do{
+            dialog = pane.createDialog("Mi legyen a döntés?");
+
+            dialog.setSize(jOptionPaneDim);
+            dialog.setVisible(true);
+            dialog.dispose();
+
+            try {
+                return (int) pane.getValue() == JOptionPane.YES_OPTION;
+            } catch (NullPointerException ignore) {
+            }
+        } while(true);
     }
 }

@@ -32,6 +32,7 @@ import pricecalc.utils.CSVFormatException;
 import pricecalc.utils.CSVLineException;
 import pricecalc.utils.CSVRecord;
 import pricecalc.utils.CSVField;
+import pricecalc.utils.CSVType;
 
 /**
  *
@@ -45,7 +46,7 @@ public class PriceCalc {
     
     private File dbRoot;
     
-    private File dbBasePriceTab;
+    private File dbBasePriceRatioTab;
     private File dbIntervalTab;
     private File dbServTypeTab;
     
@@ -54,7 +55,7 @@ public class PriceCalc {
     private File dbContracts;
     private File dbOutputs;
     
-    private Float basePrice;
+    private Float basePriceRatio;
     private List<CSVRecord> intervals;
     private List<CSVRecord> serviceTypes;
     private List<CSVRecord> apClasses;
@@ -113,9 +114,9 @@ public class PriceCalc {
             allGood = false;
         }
         try {
-            dbBasePriceTab = new File(dbRoot, (String) config.get("basePrice") );
+            dbBasePriceRatioTab = new File(dbRoot, (String) config.get("basePriceRatio") );
         } catch (NullPointerException ex) {
-            this.userInterface.showError("Nem található meg a \"basePrice\" kulcs");
+            this.userInterface.showError("Nem található meg a \"basePriceRatio\" kulcs");
             allGood = false;
         }
         try {
@@ -164,24 +165,39 @@ public class PriceCalc {
     
     private void connectDB() throws DatabaseException {
         CSVFileHandler handler;
-        handler = new CSVFileHandler("N", ";",
-                this.customDateFormat,
-                this.customNumberFormat);
+        handler = new CSVFileHandler(new CSVType[]{CSVType.NUMBER},
+                                     ";", 
+                                     this.customDateFormat,
+                                     this.customNumberFormat,
+                                     dbBasePriceRatioTab
+                );
+        
+        List<CSVRecord> result;
         
         try {
-            basePrice = (Float) handler.parse(dbBasePriceTab).get(0).get("Ár százalék").valueOf();
+            result = handler.parse();
+            basePriceRatio = (Float) result.get(0).get("Ár százalék").valueOf();
+            this.userInterface.showBasePriceRatio(handler, result);
         } catch (IOException ex) {
-            this.userInterface.showError(dbBasePriceTab.getName() + " fájlt nem lehetett megnyitni");
+            this.userInterface.showError(dbBasePriceRatioTab.getName() + " fájlt nem lehetett megnyitni");
             throw new DatabaseException();
         } catch (CSVLineException ex) {
-            this.userInterface.showError(dbBasePriceTab.getName() + " fájl " + ex.getIndex()
+            this.userInterface.showError(dbBasePriceRatioTab.getName() + " fájl " + ex.getIndex()
                     + " sorában hiba történt a " + ex.getErrorOffset() + " pozicióban");
             throw new DatabaseException();
         }
         try{
-            handler.setDataFormat("SDDN");
+            handler.setDataFormat(new CSVType[]{
+                        CSVType.STRING,
+                        CSVType.DATE,
+                        CSVType.DATE,
+                        CSVType.NUMBER
+            });
             // TODO: átlapolt időtartamok szűrése
-            intervals = handler.parse(dbIntervalTab);
+            handler.setFile(dbIntervalTab);
+            handler.setDateFormat(new SimpleDateFormat("MM-dd"));
+            intervals = handler.parse();
+            this.userInterface.showIntervals(handler, intervals);
         } catch (IOException ex) {
             this.userInterface.showError(dbIntervalTab.getName() + " fájlt nem lehetett megnyitni");
             throw new DatabaseException();
@@ -191,8 +207,11 @@ public class PriceCalc {
             throw new DatabaseException();
         }
         try {
-            handler.setDataFormat("SN");
-            serviceTypes = handler.parse(dbServTypeTab);
+            handler.setDataFormat(new CSVType[]{CSVType.STRING, CSVType.NUMBER});
+            handler.setFile(dbServTypeTab);
+            handler.setDateFormat(customDateFormat);
+            serviceTypes = handler.parse();
+            this.userInterface.showServiceTypes(handler, serviceTypes);
         } catch (IOException ex) {
             this.userInterface.showError(dbServTypeTab.getName() + " fájlt nem lehetett megnyitni");
             throw new DatabaseException();
@@ -202,8 +221,15 @@ public class PriceCalc {
             throw new DatabaseException();
         }
         try {
-            handler.setDataFormat("SCSS");
-            apClasses = handler.parse(dbAPClassTab);
+            handler.setDataFormat(new CSVType[]{
+                CSVType.STRING,
+                CSVType.CURRENCY,
+                CSVType.STRING,
+                CSVType.STRING
+            });
+            handler.setFile(dbAPClassTab);
+            apClasses = handler.parse();
+            this.userInterface.showApClasses(handler, apClasses);
         } catch (IOException ex) {
             this.userInterface.showError(dbAPClassTab.getName() + " fájlt nem lehetett megnyitni");
             throw new DatabaseException();
@@ -213,8 +239,10 @@ public class PriceCalc {
             throw new DatabaseException();
         }
         try {    
-            handler.setDataFormat("SS");
-            aps = handler.parse(dbAPTab);
+            handler.setDataFormat(new CSVType[]{CSVType.STRING, CSVType.STRING});
+            handler.setFile(dbAPTab);
+            aps = handler.parse();
+            this.userInterface.showAPs(handler, aps);
 
         } catch (IOException ex) {
             this.userInterface.showError(dbAPTab.getName() + " fájlt nem lehetett megnyitni");
@@ -237,7 +265,7 @@ public class PriceCalc {
                 this.userInterface.showMessage("A mappa sikeresen léterejött.");
             } catch (SecurityException ex) {
                 this.userInterface.showError("Nem lehetett létrehozni a " +
-                        dbOutputs.getName() + " könyvtárati");
+                        dbOutputs.getName() + " könyvtárat");
                 throw new DatabaseException();
             }
         }else{
@@ -245,11 +273,22 @@ public class PriceCalc {
         }
         
     }
-
+    
     protected void calculateContract(File contract) throws DatabaseException{
-        CSVFileHandler handler = new CSVFileHandler("SDDSNN", ";",
-                                                    this.customDateFormat,
-                                                    this.customNumberFormat);
+        CSVFileHandler handler = new CSVFileHandler(
+                new CSVType[]{
+                    CSVType.STRING,
+                    CSVType.DATE,
+                    CSVType.DATE,
+                    CSVType.STRING,
+                    CSVType.NUMBER,
+                    CSVType.NUMBER
+                },
+                ";",
+                this.customDateFormat,
+                this.customNumberFormat,
+                contract
+        );
 
         String apName;
         Date from;
@@ -281,9 +320,9 @@ public class PriceCalc {
         int extPos;
         
         try {
-            for (CSVRecord record : handler.parse(contract)){
+            for (CSVRecord record : handler.parse()){
                 
-                intervalPriceRatio = basePrice;
+                intervalPriceRatio = basePriceRatio;
                 serviceTypePriceRatio = null;
                 apApClass = null;
                 apClassPrice = null;
@@ -376,35 +415,47 @@ public class PriceCalc {
             resultHeader.put("Pont kódja", 0);
             resultHeader.put("Összeg", 1);
             
-            handler.setDataFormat("SN");
+            outName = contract.getName();
+            extPos = outName.lastIndexOf(".");
+
+            if (extPos != -1) {
+                outName = outName.substring(0, extPos);
+            }
+
+            outFile = new File(dbOutputs, outName + "-result.csv");
+            
+            
+            handler.setFile(outFile);
+            handler.setDataFormat(new CSVType[]{CSVType.STRING, CSVType.NUMBER});
             handler.setHeader(resultHeader);
             
             sum = Float.valueOf(0);
             
-            for (String key : apSummerLookUp.keySet()){
-                i = apSummerLookUp.get(key);
-                sum += i;
-                apResult.add(new CSVRecord(new CSVField[]{new CSVField<>(key),
-                                                          new CSVField<>(Float.valueOf(i))},
-                                           handler));
-            }
-
-            apResult.add(new CSVRecord(new CSVField[]{new CSVField<>("Összesen"),
-                                                      new CSVField<>(Float.valueOf(sum))},
-                                       handler));
-            
-            outName = contract.getName();
-            extPos = outName.lastIndexOf(".");
-            
-            if (extPos != -1)
-                outName = outName.substring(0, extPos);
-            
-            outFile = new File(dbOutputs, outName + "-result.csv");
-            
             if (!outFile.exists() ||
-                this.userInterface.askYesNo(outName + "-result.csv létezik, felül akarja írni?")) {
+                this.userInterface.askYesNo(outName +
+                    "-result.csv létezik, felül akarja írni?")) {
+                
+                for (String key : apSummerLookUp.keySet()) {
+                    i = apSummerLookUp.get(key);
+                    sum += i;
+                    apResult.add(new CSVRecord(
+                                new CSVField[]{
+                                    new CSVField<>(key),
+                                    new CSVField<>(Float.valueOf(i))
+                                },
+                                handler)
+                            );
+                }
+                apResult.add(new CSVRecord(
+                            new CSVField[]{
+                                new CSVField<>("Összesen"),
+                                new CSVField<>(Float.valueOf(sum))
+                            },
+                            handler)
+                        );
+                
                 try {
-                    handler.print(apResult, outFile);
+                    handler.print(apResult);
                 } catch (CSVFormatException ex) {
                     this.userInterface.showError("A kimeneti fájl "
                             + ex.getLine() + " sorát nem sikerült formátumhoz igaítani");
@@ -416,28 +467,38 @@ public class PriceCalc {
             resultHeader.put("Pontcsoport", 0);
             resultHeader.put("Összeg", 1);
             
-            handler.setHeader(resultHeader);
-
-            sum = Float.valueOf(0);
-
-            for (String key : apClassSummerLookUp.keySet()) {
-                i = apClassSummerLookUp.get(key);
-                sum += i;
-                apClassResult.add(new CSVRecord(new CSVField[]{new CSVField<>(key),
-                                                               new CSVField<>(Float.valueOf(i))},
-                                                handler));
-            }
-
-            apClassResult.add(new CSVRecord(new CSVField[]{new CSVField<>("Összesen"),
-                                            new CSVField<>(Float.valueOf(sum))},
-                              handler));
-
             outFile = new File(dbOutputs, outName + "-class-result.csv");
-
+            
+            handler.setFile(outFile);
+            handler.setHeader(resultHeader);
+            
             if (!outFile.exists() ||
-                this.userInterface.askYesNo(outName + "-class-result.csv létezik, felül akarja írni?")){
+                this.userInterface.askYesNo(outName +
+                    "-class-result.csv létezik, felül akarja írni?")){
+                
+                sum = Float.valueOf(0);
+
+                for (String key : apClassSummerLookUp.keySet()) {
+                    i = apClassSummerLookUp.get(key);
+                    sum += i;
+                    apClassResult.add(new CSVRecord(
+                                new CSVField[]{
+                                    new CSVField<>(key),
+                                    new CSVField<>(Float.valueOf(i))
+                                },
+                                handler)
+                            );
+                }
+                apClassResult.add(new CSVRecord(
+                            new CSVField[]{
+                                new CSVField<>("Összesen"),
+                                new CSVField<>(Float.valueOf(sum))
+                            },
+                            handler)
+                        );
+                
                 try {
-                    handler.print(apClassResult, outFile);
+                    handler.print(apClassResult);
                 } catch (CSVFormatException ex) {
                     this.userInterface.showError("A kimeneti fájl " + ex.getLine() + " sorát nem sikerült formátumhoz igaítani");
                 }
@@ -516,6 +577,7 @@ public class PriceCalc {
     
     public static void main(String[] args) {
         PriceCalc calc = new PriceCalc();
+        CSVFileHandler handler;
         
         calc.userInterface = new GUI(); //new BasicUI();
         calc.userInterface.start();
@@ -540,9 +602,11 @@ public class PriceCalc {
             calc.userInterface.showError("Nem található a ." +
                     configFileName + " fájl.");
             try {
-                if (calc.userInterface.askYesNo("Alapértelmezésbe akarja állítani a kofigurációs fájlt?")) {
+                if (calc.userInterface.askYesNo("Alapértelmezésbe akarja "
+                        + "állítani a kofigurációs fájlt?")) {
                     calc.initConfig();
-                    calc.userInterface.showMessage("A kofigurációs fájl sikeresen alapértelmezésbe állt.");
+                    calc.userInterface.showMessage("A kofigurációs fájl"
+                            + " sikeresen alapértelmezésbe állt.");
                 } else {
                     System.exit(1);
                 }
@@ -555,9 +619,11 @@ public class PriceCalc {
             calc.userInterface.showError("Hibás konfigurációs fájl: " + configFileName);
             
             try {
-                if (calc.userInterface.askYesNo("Alapértelmezésbe akarja állítani a kofigurációs fájlt?")) {
+                if (calc.userInterface.askYesNo("Alapértelmezésbe akarja"
+                        + " állítani a kofigurációs fájlt?")) {
                     calc.initConfig();
-                    calc.userInterface.showMessage("A kofigurációs fájl sikeresen alapértelmezésbe állt.");
+                    calc.userInterface.showMessage("A kofigurációs fájl"
+                            + " sikeresen alapértelmezésbe állt.");
                 } else {
                     System.exit(1);
                 }
@@ -576,12 +642,37 @@ public class PriceCalc {
             System.exit(3);
         }
         
+        handler = new CSVFileHandler(
+                    new CSVType[]{
+                        CSVType.STRING,
+                        CSVType.DATE,
+                        CSVType.DATE,
+                        CSVType.STRING,
+                        CSVType.NUMBER,
+                        CSVType.NUMBER
+                    },
+                    ";",
+                    calc.customDateFormat,
+                    calc.customNumberFormat
+                );
+        
         for (File contract : calc.dbContracts.listFiles(new FileExtensionFilter("csv"))) {
             System.out.println(contract.getName());
+//            try {
+//                calc.calculateContract(contract);
+//            } catch (DatabaseException ignore) {
+//            }
+//            
+            handler.setFile(contract);
+            
             try {
-                calc.calculateContract(contract);
-            } catch (DatabaseException ignore) {
+                calc.userInterface.showContract(handler, handler.parse(), calc);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            } catch (CSVLineException ex) {
+                ex.printStackTrace();
             }
+            
         }
         
     }

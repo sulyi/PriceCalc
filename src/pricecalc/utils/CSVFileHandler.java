@@ -31,53 +31,89 @@ import java.util.regex.Pattern;
 
 public class CSVFileHandler implements Cloneable {
     
-    private String format;
+    private CSVType[] format;
     private SimpleDateFormat dateFormat;
     private NumberFormat floatFormat;
     private String sep;
     private Map<String, Integer> header;
-    
+    private File file;
+
     public CSVFileHandler() {
-        this(null, null, null, null);
+        this(null, null, null, null, null);
     }
     
-    public CSVFileHandler(final String dataFormat, final String delimiter) {
-        this(dataFormat, delimiter, null, null);
+    public CSVFileHandler(final CSVType[] dataFormat,
+                          final String delimiter,
+                          final File source) {
+        this(dataFormat, delimiter, null, null, source);
     }
     
-    public CSVFileHandler(final String dataFormat, final String delimiter, final SimpleDateFormat dateFormat) {
-        this(dataFormat, delimiter, dateFormat, null);
+    public CSVFileHandler(final CSVType[] dataFormat,
+                          final String delimiter,
+                          final SimpleDateFormat dateFormat,
+                          final File source) {
+        this(dataFormat, delimiter, dateFormat, null, source);
     }
     
-    public CSVFileHandler(final String dataFormat, final String delimiter, final NumberFormat floatFormat) {
-        this(dataFormat, delimiter, null, floatFormat);
+    public CSVFileHandler(final CSVType[] dataFormat,
+                          final String delimiter,
+                          final NumberFormat floatFormat,
+                          final File source) {
+        this(dataFormat, delimiter, null, floatFormat, source);
     }
     
-    public CSVFileHandler(final String dataFormat,
-                     final String delimiter,
-                     final SimpleDateFormat dateFormat,
-                     final NumberFormat floatFormat) {
+    public CSVFileHandler(final CSVType[] dataFormat,
+                          final String delimiter) {
+        this(dataFormat, delimiter, null, null, null);
+    }
+
+    public CSVFileHandler(final CSVType[] dataFormat,
+                          final String delimiter,
+                          final SimpleDateFormat dateFormat) {
+        this(dataFormat, delimiter, dateFormat, null, null);
+    }
+
+    public CSVFileHandler(final CSVType[] dataFormat,
+                          final String delimiter,
+                          final NumberFormat floatFormat) {
+        this(dataFormat, delimiter, null, floatFormat, null);
+    }
+    
+    public CSVFileHandler(final CSVType[] dataFormat,
+                          final String delimiter,
+                          final SimpleDateFormat dateFormat,
+                          final NumberFormat floatFormat
+            ) {
+        this(dataFormat, delimiter, dateFormat, floatFormat, null);
+    }
+    
+    public CSVFileHandler(final CSVType[] dataFormat,
+                          final String delimiter,
+                          final SimpleDateFormat dateFormat,
+                          final NumberFormat floatFormat,
+                          final File source) {
         if (delimiter == null)
             throw new IllegalArgumentException("Invalid CSV delimiter: null");
         if (delimiter.length() > 1 || delimiter.isEmpty())
             throw new IllegalArgumentException("Invalid CSV delimiter: " + delimiter);
         
-        if (dateFormat == null && dataFormat.contains("D"))
+        if (dateFormat == null && Arrays.asList(dataFormat).contains(CSVType.DATE))
             throw new IllegalArgumentException("Date format is not set, while "+ dataFormat+" contains date");
-        if (floatFormat == null && dataFormat.contains("N"))
+        if (floatFormat == null && Arrays.asList(dataFormat).contains(CSVType.NUMBER))
             throw new IllegalArgumentException("Number format is not set, while " + dataFormat + " contains number");
         
         // TODO: format ellenörzése, mást is tartalmaz mint S,N vagy D
         
+        this.file = source;
         this.format = dataFormat;
         this.sep = delimiter;
         this.dateFormat = dateFormat;
         this.floatFormat = floatFormat;
     }
     
-    public List<CSVRecord> parse(File source) throws IOException, CSVLineException{
+    public List<CSVRecord> parse() throws IOException, CSVLineException{
         BufferedReader sourceReader = new BufferedReader(new InputStreamReader(
-                new FileInputStream(source), "UTF-8"));
+                new FileInputStream(this.file), "UTF-8"));
         
         // rendszer független, akár egy fájlon belül is változhat a sor vég, akkor is müködik
         // elvileg
@@ -124,10 +160,10 @@ public class CSVFileHandler implements Cloneable {
         return out;
     }
     
-    public void print(List<CSVRecord> data, File target)
+    public void print(List<CSVRecord> data)
             throws IOException, CSVFormatException{
         BufferedWriter targetWriter = new BufferedWriter(new OutputStreamWriter(
-                new FileOutputStream(target), "UTF-8"));
+                new FileOutputStream(this.file), "UTF-8"));
         
         Map<Integer, String> rHeader = reverseHeader();
         
@@ -143,8 +179,7 @@ public class CSVFileHandler implements Cloneable {
         
         for(int i=0;i<data.size();i++){
             record = data.get(i);
-            // TODO: áttenni a CSVRecord-ba
-            if (record.fields.length != this.format.length()){
+            if (record.fields.length != this.format.length){
                throw new CSVFormatException("Line does not match format of file", i);
             }
             recordStingFields = record.toStringArray();
@@ -158,21 +193,6 @@ public class CSVFileHandler implements Cloneable {
         }
         
         targetWriter.close();
-    }
-    
-    protected Map<Integer, String> reverseHeader(){
-        Map<Integer, String> rHeader = new LinkedHashMap<>();
-        
-        for(int i=0;i<this.header.size();i++){
-            for (String key : this.header.keySet()){
-                if (this.header.get(key) == i){
-                    rHeader.put(Integer.valueOf(i), key);
-                    break;
-                }
-            }
-        }
-        
-        return rHeader;
     }
     
     private void initHeader(String headerStr) {
@@ -201,14 +221,29 @@ public class CSVFileHandler implements Cloneable {
                 headerMap.put(key, Integer.valueOf(i));
             }
             
-            if (headerMap.size() > this.format.length())
+            if (headerMap.size() > this.format.length)
                 throw new IllegalArgumentException(String.format(
                             "Size of header is %d, but only %d given in format",
-                            headerMap.size(), this.format.length()
+                            headerMap.size(), this.format.length
                         ));
             
             this.header = headerMap;
         }
+    }
+    
+    private Map<Integer, String> reverseHeader() {
+        Map<Integer, String> rHeader = new LinkedHashMap<>();
+
+        for (int i = 0; i < this.header.size(); i++) {
+            for (String key : this.header.keySet()) {
+                if (this.header.get(key) == i) {
+                    rHeader.put(Integer.valueOf(i), key);
+                    break;
+                }
+            }
+        }
+
+        return rHeader;
     }
     
     public SimpleDateFormat getDateFormat() {
@@ -227,11 +262,11 @@ public class CSVFileHandler implements Cloneable {
         this.floatFormat = floatFormat;
     }
 
-    public String getDataFormat() {
+    public CSVType[] getDataFormat() {
         return format;
     }
 
-    public void setDataFormat(String format) {
+    public void setDataFormat(CSVType[] format) {
         this.header = null;
         this.format = format;
     }
@@ -253,11 +288,34 @@ public class CSVFileHandler implements Cloneable {
     public Map<String, Integer> getHeader() {
         return header;
     }
-
+    
+    public String[] getHeaderToStringArray(){
+        String[] result = new String[header.size()];
+        Integer[] indicies = new Integer[header.size()];
+        Map<Integer, String> rHeader = reverseHeader();
+        
+        rHeader.keySet().toArray(indicies);
+        Arrays.sort(indicies);
+        
+        for (int i=0; i<indicies.length; i++){
+            result[i] = rHeader.get(indicies[i]);
+        }
+        
+        return result;
+    }
+    
     public void setHeader(Map<String, Integer> header) {
         this.header = header;
     }
     
+    public File getFile() {
+        return file;
+    }
+
+    public void setFile(File file) {
+        this.file = file;
+    }
+
     public CSVFileHandler clone() {
         try {
             return (CSVFileHandler) super.clone();
