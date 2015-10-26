@@ -191,6 +191,11 @@ public class GUI extends javax.swing.JFrame implements UI{
         jButtonSaveResult.setFocusable(false);
         jButtonSaveResult.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButtonSaveResult.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jButtonSaveResult.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jButtonSaveResultMouseClicked(evt);
+            }
+        });
         jToolBar1.add(jButtonSaveResult);
 
         jButtonSaveAllResult.setIcon(UIManager.getIcon("FileView.floppyDriveIcon"));
@@ -198,6 +203,11 @@ public class GUI extends javax.swing.JFrame implements UI{
         jButtonSaveAllResult.setFocusable(false);
         jButtonSaveAllResult.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButtonSaveAllResult.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jButtonSaveAllResult.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jButtonSaveAllResultMouseClicked(evt);
+            }
+        });
         jToolBar1.add(jButtonSaveAllResult);
 
         javax.swing.GroupLayout jPanelContractsResultsLayout = new javax.swing.GroupLayout(jPanelContractsResults);
@@ -297,48 +307,44 @@ public class GUI extends javax.swing.JFrame implements UI{
     private void exitMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitMenuItemActionPerformed
         System.exit(0);
     }//GEN-LAST:event_exitMenuItemActionPerformed
+
+    private void jButtonSaveAllResultMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButtonSaveAllResultMouseClicked
+        if (evt.getID() == MouseEvent.MOUSE_CLICKED
+                && ((JButton) evt.getSource()).isEnabled()) {
+            calculatorSaveAllTableCallback();
+        }
+    }//GEN-LAST:event_jButtonSaveAllResultMouseClicked
+
+    private void jButtonSaveResultMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButtonSaveResultMouseClicked
+        if (evt.getID() == MouseEvent.MOUSE_CLICKED
+                && ((JButton) evt.getSource()).isEnabled()) {
+            calculatorSaveTableCallback(jTabbedPaneContractsResults.getSelectedIndex());
+        }
+    }//GEN-LAST:event_jButtonSaveResultMouseClicked
     
-    private void calculatorSaveTableCallback(PriceCalc calculator) {
-        String baseName = jTabbedPaneContractsResults.getTitleAt(
-                jTabbedPaneContractsResults.getSelectedIndex());
+    private void calculatorSaveTableCallback(int i) {
+        String baseName = jTabbedPaneContractsResults.getTitleAt(i);
 
         JSplitPane jSplitPaneResult = (JSplitPane) ((JSplitPane)
                 jTabbedPaneContractsResults
                 .getSelectedComponent()).getBottomComponent();
 
-        calculator.saveTable(baseName + "-result.csv",
-                ((CSVTableModel) ((JTable) ((JScrollPane)
-                jSplitPaneResult
-                .getLeftComponent()).getViewport().getView()).getModel()).rows);
+        ((CSVTableModel) ((JTable) ((JScrollPane) jSplitPaneResult
+                .getLeftComponent()).getViewport().getView()).getModel())
+                .saveTable(baseName + "-result.csv");
         
-        calculator.saveTable(baseName + "-class-result.csv",
-                ((CSVTableModel) ((JTable) ((JScrollPane)
-                jSplitPaneResult
-                .getRightComponent()).getViewport().getView()).getModel()).rows);
+        ((CSVTableModel) ((JTable) ((JScrollPane) jSplitPaneResult
+                .getRightComponent()).getViewport().getView()).getModel())
+                .saveTable(baseName + "-class-result.csv");
         
     }
     
-    private void calculatorSaveAllTableCallback(PriceCalc calculator) {
-        String baseName;
-
+    private void calculatorSaveAllTableCallback() {
         int count = jTabbedPaneContractsResults.getTabCount();
         
         for (int i=0; i<count; i++){
-            System.out.println(i);
-
-            JSplitPane jSplitPaneResult = (JSplitPane) ((JSplitPane)
-                    jTabbedPaneContractsResults
-                    .getComponentAt(i)).getBottomComponent();
-
-            baseName = jTabbedPaneContractsResults.getTitleAt(i);
-
-            calculator.saveTable(baseName + "-result.csv",
-                    ((CSVTableModel) ((JTable) ((JScrollPane) jSplitPaneResult.getLeftComponent()).getViewport().getView()).getModel()).rows);
-
-            calculator.saveTable(baseName + "-class-result.csv",
-                    ((CSVTableModel) ((JTable) ((JScrollPane) jSplitPaneResult.getRightComponent()).getViewport().getView()).getModel()).rows);
+            calculatorSaveTableCallback(i);
         }
-
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -386,8 +392,6 @@ public class GUI extends javax.swing.JFrame implements UI{
     private Dimension jOptionPaneDim = new Dimension(420, 180);
     
     private List<JSplitPane> LockedPanes = new ArrayList<>();
-    // FIXME: minden táblához állítsa be a showContract callback obiektumát
-    private boolean isCalculatorSet = false;
     
     @Override
     public void start() {
@@ -486,16 +490,18 @@ public class GUI extends javax.swing.JFrame implements UI{
                 JScrollPane jScrollPaneResultByClass = new JScrollPane();
                 JTable jTableResultByClass = new JTable();
 
-                jTableContract.setModel(new CSVTableModel(handler, rows));
+                jTableContract.setModel(new CSVTableModel(handler, rows, calculator));
                 
                 results = calculator.calculateContract(name, rows);
                 if (!results.isEmpty()) {
-                    jTableResult.setModel(new CSVTableModel(results.get(0).getHandler(), results));
+                    jTableResult.setModel(new CSVTableModel(results.get(0).getHandler(),
+                                            results, calculator));
                 }
                 
                 results = calculator.calculateContractByClass(name, rows);
                 if (!results.isEmpty()) {
-                    jTableResultByClass.setModel(new CSVTableModel(results.get(0).getHandler(), results));
+                    jTableResultByClass.setModel(new CSVTableModel(results.get(0).getHandler(),
+                                                    results, calculator));
                 }
                 
                 jScrollPaneContract.setViewportView(jTableContract);
@@ -520,26 +526,6 @@ public class GUI extends javax.swing.JFrame implements UI{
                                 }
                             }
                         );
-                if (!isCalculatorSet) {
-                    jButtonSaveResult.addMouseListener(new java.awt.event.MouseAdapter() {
-                        public void mouseClicked(java.awt.event.MouseEvent evt) {
-                            if (evt.getID() == MouseEvent.MOUSE_CLICKED &&
-                                    ((JButton) evt.getSource()).isEnabled()) {
-                                calculatorSaveTableCallback(calculator);
-                            }
-                        }
-                    });
-
-                    jButtonSaveAllResult.addMouseListener(new java.awt.event.MouseAdapter() {
-
-                        public void mouseClicked(java.awt.event.MouseEvent evt) {
-                            if(((JButton) evt.getSource()).isEnabled()){
-                                calculatorSaveAllTableCallback(calculator);
-                            }
-                        }
-                    });
-                    isCalculatorSet = true;
-                }
                 
                 jSplitPaneResult.setLeftComponent(jScrollPaneResult);
                 jSplitPaneResult.setRightComponent(jScrollPaneResultByClass);
@@ -604,12 +590,24 @@ public class GUI extends javax.swing.JFrame implements UI{
     
     class CSVTableModel extends AbstractTableModel {
 
-        private final CSVFileHandler handler;
+        private CSVFileHandler handler;
         private List<CSVRecord> rows;
+        private PriceCalc callback;
+        
+        public CSVTableModel(CSVFileHandler handler, List<CSVRecord> rows){
+            this(handler, rows, null);
+        }
 
-        public CSVTableModel(CSVFileHandler handler, List<CSVRecord> rows) {
+        public CSVTableModel(CSVFileHandler handler,
+                             List<CSVRecord> rows,
+                             PriceCalc callback) {
             this.handler = handler;
             this.rows = rows;
+            this.callback = callback;
+        }
+        
+        public void saveTable(String name){
+            callback.saveTable(name, rows);
         }
 
         @Override
