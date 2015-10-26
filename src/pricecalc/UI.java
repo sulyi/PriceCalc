@@ -27,7 +27,7 @@ public interface UI {
     
     void showAPs(CSVFileHandler handler, List<CSVRecord> rows);
     
-    void showContract(CSVFileHandler handler, List<CSVRecord> rows, PriceCalc callback);
+    void showContract(String name, CSVFileHandler handler, List<CSVRecord> rows, PriceCalc callback);
     
     void showError(String msg);
     

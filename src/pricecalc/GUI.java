@@ -11,15 +11,20 @@
 package pricecalc;
 
 import java.awt.Dimension;
+import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableModel;
 import pricecalc.utils.CSVFileHandler;
 import pricecalc.utils.CSVRecord;
 
@@ -46,6 +51,8 @@ public class GUI extends javax.swing.JFrame implements UI{
         jSplitPaneMain = new javax.swing.JSplitPane();
         jPanelDB = new javax.swing.JPanel();
         jToolBarDB = new javax.swing.JToolBar();
+        jButtonSaveCondition = new javax.swing.JButton();
+        jButtonSaveAllCondition = new javax.swing.JButton();
         jTannedPaneDB = new javax.swing.JTabbedPane();
         jScrollPaneBasePriceRatio = new javax.swing.JScrollPane();
         jTableBasePriceRatio = new javax.swing.JTable();
@@ -58,8 +65,14 @@ public class GUI extends javax.swing.JFrame implements UI{
         jScrollPaneAPs = new javax.swing.JScrollPane();
         jTableAPs = new javax.swing.JTable();
         jPanelContractsResults = new javax.swing.JPanel();
-        jToolBarContractsResults = new javax.swing.JToolBar();
         jTabbedPaneContractsResults = new javax.swing.JTabbedPane();
+        jToolBar1 = new javax.swing.JToolBar();
+        jButtonSaveContract = new javax.swing.JButton();
+        jButtonSaveAllContract = new javax.swing.JButton();
+        jButtonRecalcResult = new javax.swing.JButton();
+        jButtonRecalcAllResult = new javax.swing.JButton();
+        jButtonSaveResult = new javax.swing.JButton();
+        jButtonSaveAllResult = new javax.swing.JButton();
         menuBar = new javax.swing.JMenuBar();
         fileMenu = new javax.swing.JMenu();
         openMenuItem = new javax.swing.JMenuItem();
@@ -83,27 +96,38 @@ public class GUI extends javax.swing.JFrame implements UI{
         jToolBarDB.setFloatable(false);
         jToolBarDB.setRollover(true);
 
-        jTableBasePriceRatio.setModel(tableModelBasePriceRatio);
+        jButtonSaveCondition.setIcon(UIManager.getIcon("FileView.floppyDriveIcon"));
+        jButtonSaveCondition.setToolTipText("Feltétel mentése");
+        jButtonSaveCondition.setEnabled(false);
+        jButtonSaveCondition.setFocusable(false);
+        jButtonSaveCondition.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButtonSaveCondition.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBarDB.add(jButtonSaveCondition);
+
+        jButtonSaveAllCondition.setIcon(UIManager.getIcon("FileView.floppyDriveIcon"));
+        jButtonSaveAllCondition.setToolTipText("Összes feltétel mentése");
+        jButtonSaveAllCondition.setEnabled(false);
+        jButtonSaveAllCondition.setFocusable(false);
+        jButtonSaveAllCondition.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButtonSaveAllCondition.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBarDB.add(jButtonSaveAllCondition);
+
         jScrollPaneBasePriceRatio.setViewportView(jTableBasePriceRatio);
 
         jTannedPaneDB.addTab("Alap ár százalék", jScrollPaneBasePriceRatio);
 
-        jTableIntervals.setModel(tableModelBasePriceRatio);
         jScrollPaneIntervals.setViewportView(jTableIntervals);
 
         jTannedPaneDB.addTab("Időszakok", jScrollPaneIntervals);
 
-        jTableServiceTypes.setModel(tableModelBasePriceRatio);
         jScrollPaneServiceTypes.setViewportView(jTableServiceTypes);
 
         jTannedPaneDB.addTab("Szolgáltatás típusok", jScrollPaneServiceTypes);
 
-        jTableApClasses.setModel(tableModelBasePriceRatio);
         jScrollPaneApClasses.setViewportView(jTableApClasses);
 
         jTannedPaneDB.addTab("Hozzáférési pont típusok", jScrollPaneApClasses);
 
-        jTableAPs.setModel(tableModelBasePriceRatio);
         jScrollPaneAPs.setViewportView(jTableAPs);
 
         jTannedPaneDB.addTab("Hozzáférési pontok", jScrollPaneAPs);
@@ -112,8 +136,8 @@ public class GUI extends javax.swing.JFrame implements UI{
         jPanelDB.setLayout(jPanelDBLayout);
         jPanelDBLayout.setHorizontalGroup(
             jPanelDBLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jToolBarDB, javax.swing.GroupLayout.DEFAULT_SIZE, 919, Short.MAX_VALUE)
-            .addComponent(jTannedPaneDB, javax.swing.GroupLayout.DEFAULT_SIZE, 919, Short.MAX_VALUE)
+            .addComponent(jToolBarDB, javax.swing.GroupLayout.DEFAULT_SIZE, 922, Short.MAX_VALUE)
+            .addComponent(jTannedPaneDB, javax.swing.GroupLayout.DEFAULT_SIZE, 922, Short.MAX_VALUE)
         );
         jPanelDBLayout.setVerticalGroup(
             jPanelDBLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -127,22 +151,68 @@ public class GUI extends javax.swing.JFrame implements UI{
 
         jSplitPaneMain.setLeftComponent(jPanelDB);
 
-        jToolBarContractsResults.setFloatable(false);
-        jToolBarContractsResults.setRollover(true);
+        jToolBar1.setFloatable(false);
+        jToolBar1.setRollover(true);
+
+        jButtonSaveContract.setIcon(UIManager.getIcon("FileView.floppyDriveIcon"));
+        jButtonSaveContract.setToolTipText("Lekötés mentése");
+        jButtonSaveContract.setEnabled(false);
+        jButtonSaveContract.setFocusable(false);
+        jButtonSaveContract.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButtonSaveContract.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBar1.add(jButtonSaveContract);
+
+        jButtonSaveAllContract.setIcon(UIManager.getIcon("FileView.floppyDriveIcon"));
+        jButtonSaveAllContract.setToolTipText("Összes lekötés mentése");
+        jButtonSaveAllContract.setEnabled(false);
+        jButtonSaveAllContract.setFocusable(false);
+        jButtonSaveAllContract.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButtonSaveAllContract.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBar1.add(jButtonSaveAllContract);
+
+        jButtonRecalcResult.setIcon(UIManager.getIcon("FileView.computerIcon"));
+        jButtonRecalcResult.setToolTipText("Lekötés újra számítása");
+        jButtonRecalcResult.setEnabled(false);
+        jButtonRecalcResult.setFocusable(false);
+        jButtonRecalcResult.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButtonRecalcResult.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBar1.add(jButtonRecalcResult);
+
+        jButtonRecalcAllResult.setIcon(UIManager.getIcon("FileView.computerIcon"));
+        jButtonRecalcAllResult.setToolTipText("Összes lekötés újraszámítása");
+        jButtonRecalcAllResult.setEnabled(false);
+        jButtonRecalcAllResult.setFocusable(false);
+        jButtonRecalcAllResult.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButtonRecalcAllResult.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBar1.add(jButtonRecalcAllResult);
+
+        jButtonSaveResult.setIcon(UIManager.getIcon("FileView.floppyDriveIcon"));
+        jButtonSaveResult.setToolTipText("Eredmény mentése");
+        jButtonSaveResult.setFocusable(false);
+        jButtonSaveResult.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButtonSaveResult.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBar1.add(jButtonSaveResult);
+
+        jButtonSaveAllResult.setIcon(UIManager.getIcon("FileView.floppyDriveIcon"));
+        jButtonSaveAllResult.setToolTipText("Összes eredmény mentése");
+        jButtonSaveAllResult.setFocusable(false);
+        jButtonSaveAllResult.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButtonSaveAllResult.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBar1.add(jButtonSaveAllResult);
 
         javax.swing.GroupLayout jPanelContractsResultsLayout = new javax.swing.GroupLayout(jPanelContractsResults);
         jPanelContractsResults.setLayout(jPanelContractsResultsLayout);
         jPanelContractsResultsLayout.setHorizontalGroup(
             jPanelContractsResultsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jToolBarContractsResults, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 919, Short.MAX_VALUE)
-            .addComponent(jTabbedPaneContractsResults, javax.swing.GroupLayout.DEFAULT_SIZE, 919, Short.MAX_VALUE)
+            .addComponent(jTabbedPaneContractsResults, javax.swing.GroupLayout.DEFAULT_SIZE, 922, Short.MAX_VALUE)
+            .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 922, Short.MAX_VALUE)
         );
         jPanelContractsResultsLayout.setVerticalGroup(
             jPanelContractsResultsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanelContractsResultsLayout.createSequentialGroup()
-                .addComponent(jToolBarContractsResults, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jTabbedPaneContractsResults, javax.swing.GroupLayout.DEFAULT_SIZE, 292, Short.MAX_VALUE))
+                .addComponent(jTabbedPaneContractsResults, javax.swing.GroupLayout.DEFAULT_SIZE, 247, Short.MAX_VALUE))
         );
 
         jSplitPaneMain.setRightComponent(jPanelContractsResults);
@@ -214,11 +284,11 @@ public class GUI extends javax.swing.JFrame implements UI{
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPaneMain, javax.swing.GroupLayout.DEFAULT_SIZE, 921, Short.MAX_VALUE)
+            .addComponent(jSplitPaneMain, javax.swing.GroupLayout.DEFAULT_SIZE, 924, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPaneMain, javax.swing.GroupLayout.DEFAULT_SIZE, 491, Short.MAX_VALUE)
+            .addComponent(jSplitPaneMain, javax.swing.GroupLayout.DEFAULT_SIZE, 446, Short.MAX_VALUE)
         );
 
         pack();
@@ -227,6 +297,49 @@ public class GUI extends javax.swing.JFrame implements UI{
     private void exitMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitMenuItemActionPerformed
         System.exit(0);
     }//GEN-LAST:event_exitMenuItemActionPerformed
+    
+    private void calculatorSaveTableCallback(PriceCalc calculator) {
+        String baseName = jTabbedPaneContractsResults.getTitleAt(
+                jTabbedPaneContractsResults.getSelectedIndex());
+
+        JSplitPane jSplitPaneResult = (JSplitPane) ((JSplitPane)
+                jTabbedPaneContractsResults
+                .getSelectedComponent()).getBottomComponent();
+
+        calculator.saveTable(baseName + "-result.csv",
+                ((CSVTableModel) ((JTable) ((JScrollPane)
+                jSplitPaneResult
+                .getLeftComponent()).getViewport().getView()).getModel()).rows);
+        
+        calculator.saveTable(baseName + "-class-result.csv",
+                ((CSVTableModel) ((JTable) ((JScrollPane)
+                jSplitPaneResult
+                .getRightComponent()).getViewport().getView()).getModel()).rows);
+        
+    }
+    
+    private void calculatorSaveAllTableCallback(PriceCalc calculator) {
+        String baseName;
+
+        int count = jTabbedPaneContractsResults.getTabCount();
+        
+        for (int i=0; i<count; i++){
+            System.out.println(i);
+
+            JSplitPane jSplitPaneResult = (JSplitPane) ((JSplitPane)
+                    jTabbedPaneContractsResults
+                    .getComponentAt(i)).getBottomComponent();
+
+            baseName = jTabbedPaneContractsResults.getTitleAt(i);
+
+            calculator.saveTable(baseName + "-result.csv",
+                    ((CSVTableModel) ((JTable) ((JScrollPane) jSplitPaneResult.getLeftComponent()).getViewport().getView()).getModel()).rows);
+
+            calculator.saveTable(baseName + "-class-result.csv",
+                    ((CSVTableModel) ((JTable) ((JScrollPane) jSplitPaneResult.getRightComponent()).getViewport().getView()).getModel()).rows);
+        }
+
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem aboutMenuItem;
@@ -238,6 +351,14 @@ public class GUI extends javax.swing.JFrame implements UI{
     private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JMenu fileMenu;
     private javax.swing.JMenu helpMenu;
+    private javax.swing.JButton jButtonRecalcAllResult;
+    private javax.swing.JButton jButtonRecalcResult;
+    private javax.swing.JButton jButtonSaveAllCondition;
+    private javax.swing.JButton jButtonSaveAllContract;
+    private javax.swing.JButton jButtonSaveAllResult;
+    private javax.swing.JButton jButtonSaveCondition;
+    private javax.swing.JButton jButtonSaveContract;
+    private javax.swing.JButton jButtonSaveResult;
     private javax.swing.JPanel jPanelContractsResults;
     private javax.swing.JPanel jPanelDB;
     private javax.swing.JScrollPane jScrollPaneAPs;
@@ -253,7 +374,7 @@ public class GUI extends javax.swing.JFrame implements UI{
     private javax.swing.JTable jTableIntervals;
     private javax.swing.JTable jTableServiceTypes;
     private javax.swing.JTabbedPane jTannedPaneDB;
-    private javax.swing.JToolBar jToolBarContractsResults;
+    private javax.swing.JToolBar jToolBar1;
     private javax.swing.JToolBar jToolBarDB;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JMenuItem openMenuItem;
@@ -264,8 +385,9 @@ public class GUI extends javax.swing.JFrame implements UI{
 
     private Dimension jOptionPaneDim = new Dimension(420, 180);
     
-    private DefaultTableModel tableModelBasePriceRatio = new DefaultTableModel(
-            new String[]{"valami"}, 0);
+    private List<JSplitPane> LockedPanes = new ArrayList<>();
+    // FIXME: minden táblához állítsa be a showContract callback obiektumát
+    private boolean isCalculatorSet = false;
     
     @Override
     public void start() {
@@ -292,10 +414,10 @@ public class GUI extends javax.swing.JFrame implements UI{
         }
         //</editor-fold>
         
-        javax.swing.UIManager.put("OptionPane.cancelButtonText", "Mégsem");
-        javax.swing.UIManager.put("OptionPane.noButtonText", "Nem");
-        javax.swing.UIManager.put("OptionPane.okButtonText", "Rendben");
-        javax.swing.UIManager.put("OptionPane.yesButtonText", "Igen");
+        UIManager.put("OptionPane.cancelButtonText", "Mégsem");
+        UIManager.put("OptionPane.noButtonText", "Nem");
+        UIManager.put("OptionPane.okButtonText", "Rendben");
+        UIManager.put("OptionPane.yesButtonText", "Igen");
         
         SwingUtilities.updateComponentTreeUI(this);
         
@@ -307,38 +429,14 @@ public class GUI extends javax.swing.JFrame implements UI{
                 setVisible(true);
             }
         });
+        
+        showMessage("Jelenleg a táblázatok nem szerkeszthetőek."
+                + " Azonban minden lehetőség adott, hogy a felület "
+                + "bevezetékelése után erre legyen lehetőség.<br/><br/>"
+                + "Üdvözlettel,<br/>Sülyi Ákos");
+        
     }
 
-    class CSVTableModel extends AbstractTableModel{
-        private final CSVFileHandler handler;
-        private List<CSVRecord> rows;
-        
-        public CSVTableModel(CSVFileHandler handler, List<CSVRecord> rows){
-            this.handler = handler;
-            this.rows = rows;
-        }
-
-        @Override
-        public int getRowCount() {
-            return rows.size();
-        }
-
-        @Override
-        public int getColumnCount() {
-            return handler.getHeader().size();
-        }
-        
-        @Override
-        public String getColumnName(int columnIndex) {
-            return handler.getHeaderToStringArray()[columnIndex];
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            return rows.get(rowIndex).toStringField(columnIndex);
-        }
-    }
-    
     @Override
     public void showBasePriceRatio(CSVFileHandler handler, List<CSVRecord> rows) {
         jTableBasePriceRatio.setModel(new CSVTableModel(handler, rows));
@@ -366,37 +464,97 @@ public class GUI extends javax.swing.JFrame implements UI{
     }
     
     @Override
-    public void showContract(final CSVFileHandler handler, final List<CSVRecord> rows, PriceCalc calculator) {
+    public void showContract(final String name,
+                             final CSVFileHandler handler,
+                             final List<CSVRecord> rows,
+                             final PriceCalc calculator) {
         java.awt.EventQueue.invokeLater(new Runnable() {
 
             @Override
             public void run() {
+                List<CSVRecord> results;
+                
                 JSplitPane jSplitPaneContractResult = new JSplitPane();
+                
                 JScrollPane jScrollPaneContract = new JScrollPane();
                 JTable jTableContract = new JTable();
+                
+                JSplitPane jSplitPaneResult = new JSplitPane();
+                
                 JScrollPane jScrollPaneResult = new JScrollPane();
                 JTable jTableResult = new JTable();
-
-                String name = handler.getFile().getName();
-                int extPos = name.lastIndexOf(".");
-
-                if (extPos != -1) {
-                    name = name.substring(0, extPos);
-                }
+                JScrollPane jScrollPaneResultByClass = new JScrollPane();
+                JTable jTableResultByClass = new JTable();
 
                 jTableContract.setModel(new CSVTableModel(handler, rows));
                 
+                results = calculator.calculateContract(name, rows);
+                if (!results.isEmpty()) {
+                    jTableResult.setModel(new CSVTableModel(results.get(0).getHandler(), results));
+                }
+                
+                results = calculator.calculateContractByClass(name, rows);
+                if (!results.isEmpty()) {
+                    jTableResultByClass.setModel(new CSVTableModel(results.get(0).getHandler(), results));
+                }
+                
                 jScrollPaneContract.setViewportView(jTableContract);
                 jScrollPaneResult.setViewportView(jTableResult);
+                jScrollPaneResultByClass.setViewportView(jTableResultByClass);
+                
+                jSplitPaneResult.setResizeWeight(.5d);
+                
+                LockedPanes.add(jSplitPaneResult);
+                jSplitPaneResult.addPropertyChangeListener(
+                            JSplitPane.DIVIDER_LOCATION_PROPERTY, 
+                            new PropertyChangeListener() {
+
+                                @Override
+                                public void propertyChange(PropertyChangeEvent evt) {
+                                    JSplitPane source = (JSplitPane) evt.getSource();
+                                    for (JSplitPane LP : LockedPanes){
+                                        if(LP != source){
+                                            LP.setDividerLocation((int) evt.getNewValue());
+                                        }
+                                    }
+                                }
+                            }
+                        );
+                if (!isCalculatorSet) {
+                    jButtonSaveResult.addMouseListener(new java.awt.event.MouseAdapter() {
+                        public void mouseClicked(java.awt.event.MouseEvent evt) {
+                            if (evt.getID() == MouseEvent.MOUSE_CLICKED &&
+                                    ((JButton) evt.getSource()).isEnabled()) {
+                                calculatorSaveTableCallback(calculator);
+                            }
+                        }
+                    });
+
+                    jButtonSaveAllResult.addMouseListener(new java.awt.event.MouseAdapter() {
+
+                        public void mouseClicked(java.awt.event.MouseEvent evt) {
+                            if(((JButton) evt.getSource()).isEnabled()){
+                                calculatorSaveAllTableCallback(calculator);
+                            }
+                        }
+                    });
+                    isCalculatorSet = true;
+                }
+                
+                jSplitPaneResult.setLeftComponent(jScrollPaneResult);
+                jSplitPaneResult.setRightComponent(jScrollPaneResultByClass);
 
                 jSplitPaneContractResult.setDividerLocation(95);
                 jSplitPaneContractResult.setOrientation(JSplitPane.VERTICAL_SPLIT);
 
                 jSplitPaneContractResult.setTopComponent(jScrollPaneContract);
-                jSplitPaneContractResult.setBottomComponent(jScrollPaneResult);
-
-
+                jSplitPaneContractResult.setBottomComponent(jSplitPaneResult);
+                
                 jTabbedPaneContractsResults.addTab(name, jSplitPaneContractResult);
+                
+//                get JTableResult
+//                ((JScrollPane)((JSplitPane)((JSplitPane) jTabbedPaneContractsResults.getSelectedComponent())
+//                    .getBottomComponent()).getLeftComponent()).getViewport().getView()
             }
         });
         
@@ -443,4 +601,36 @@ public class GUI extends javax.swing.JFrame implements UI{
             }
         } while(true);
     }
+    
+    class CSVTableModel extends AbstractTableModel {
+
+        private final CSVFileHandler handler;
+        private List<CSVRecord> rows;
+
+        public CSVTableModel(CSVFileHandler handler, List<CSVRecord> rows) {
+            this.handler = handler;
+            this.rows = rows;
+        }
+
+        @Override
+        public int getRowCount() {
+            return rows.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return handler.getHeader().size();
+        }
+
+        @Override
+        public String getColumnName(int columnIndex) {
+            return handler.getHeaderToStringArray()[columnIndex];
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            return rows.get(rowIndex).toStringField(columnIndex);
+        }
+    }
+    
 }

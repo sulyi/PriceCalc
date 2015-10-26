@@ -26,12 +26,12 @@ public class CSVRecord {
     public CSVRecord(final String[] values,
                      final CSVFileHandler handler) throws CSVException {
         
-        this.handler = handler.clone();
+        this.handler = handler;
         this.fields = parse(values);
     }
     
     public CSVRecord(final CSVField[] values, final CSVFileHandler handler) {
-        this.handler = handler.clone();
+        this.handler = handler;
         if (values.length != handler.getDataFormat().length)
             throw new IllegalArgumentException("Number of fielsd does not match length of handler's format");
         this.fields = values;
@@ -58,52 +58,70 @@ public class CSVRecord {
         return fields[i];
     }
     
-    public void set(final String key, CSVField value) {
-        fields[handler.getHeader().get(key)] = value;
+    public void set(final String key, final CSVField value) {
+        set(handler.getHeader().get(key), value);
     }
     
-    public final CSVField[] parse(final String[] values) throws CSVException {
+    public void set(final int i, final CSVField value) {
+        fields[i] = value;
+    }
+    
+    public void set(final String key, final String value) throws CSVParseException {
+        set(handler.getHeader().get(key), value);
+    }
+    
+    public void set(final int i, final String value) throws CSVParseException {
+        fields[i] = parse(i, value);
+    }
+    
+    private CSVField parse(final int i, final String value) throws CSVParseException{
         CSVType[] format = handler.getDataFormat();
         NumberFormat floatFormat = handler.getFloatFormat();
         SimpleDateFormat dateFormat = handler.getDateFormat();
         
+        CSVType type = format[i];
+        try {
+            switch (type) {
+                case STRING:
+                    return new CSVField<>(value);
+                case NUMBER:
+                    return new CSVField<>(floatFormat.parse(value).floatValue());
+                case CURRENCY:
+                    return new CSVField<>(BigDecimal.valueOf(
+                            floatFormat.parse(value).doubleValue()).setScale(
+                            handler.getFloatFormat().getMaximumFractionDigits(),
+                            BigDecimal.ROUND_HALF_UP).stripTrailingZeros());
+                case DATE:
+                    return new CSVField<>(dateFormat.parse(value));
+                default:
+                    return null;
+            }
+        } catch (ParseException ex) {
+            throw new CSVParseException(
+                    "Couldn't parse field to type given type",
+                    i, type,
+                    ex.getErrorOffset());
+        }
+    }
+    
+    private CSVField[] parse(final String[] values) throws CSVException {
+        
+        
         CSVField[] out = new CSVField[values.length];
         CSVField curr;
-        CSVType type;
         
         for (int i=0,l=0; i<values.length; l+=values[i++].length()) {
             try {
-                type = format[i];
-                try{
-                    // TODO: CSVFileHandler.print újragondolni
-                    switch (type) {
-                        case STRING:
-                            curr = new CSVField<>(values[i]);
-                            break;
-                        case NUMBER:
-                            curr = new CSVField<>(floatFormat.parse(values[i]).floatValue());
-                            break;
-                        case CURRENCY:
-                            curr = new CSVField<>(BigDecimal.valueOf(
-                                     floatFormat.parse(values[i]).doubleValue()));
-                            break;
-                        case DATE:
-                            curr = new CSVField<>(dateFormat.parse(values[i]));
-                            break;
-                        default:
-                            curr = null;
-                    }
-                    out[i] = curr;
-                }catch (ParseException ex){
-                    throw new CSVParseException(
-                            "Couldn't parse field to type given type",
-                            i, type,
-                            l+ex.getErrorOffset());
-                }
+                out[i] = parse(i, values[i]);
+            } catch (CSVParseException ex) {
+                throw new CSVParseException(
+                        "Couldn't parse field to type given type",
+                        i, ex.getType(),
+                        l + ex.getErrorOffset());
+
             } catch (StringIndexOutOfBoundsException ex) {
                 throw new CSVException("Format index out of bounds", l);
             }
-
         }
         return out;
     }
@@ -141,6 +159,10 @@ public class CSVRecord {
             out[i] = toStringField(rHeader[i]);
         }
         return out;
+    }
+
+    public CSVFileHandler getHandler() {
+        return handler;
     }
     
 }

@@ -45,7 +45,7 @@ public class BasicUI implements UI{
     }
     
     @Override
-    public void showContract(CSVFileHandler handler, List<CSVRecord> rows, PriceCalc calculator) {
+    public void showContract(String name, CSVFileHandler handler, List<CSVRecord> rows, PriceCalc calculator) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
     

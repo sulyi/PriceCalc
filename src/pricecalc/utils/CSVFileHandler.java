@@ -36,62 +36,32 @@ public class CSVFileHandler implements Cloneable {
     private NumberFormat floatFormat;
     private String sep;
     private Map<String, Integer> header;
-    private File file;
-
+    
     public CSVFileHandler() {
-        this(null, null, null, null, null);
-    }
-    
-    public CSVFileHandler(final CSVType[] dataFormat,
-                          final String delimiter,
-                          final File source) {
-        this(dataFormat, delimiter, null, null, source);
-    }
-    
-    public CSVFileHandler(final CSVType[] dataFormat,
-                          final String delimiter,
-                          final SimpleDateFormat dateFormat,
-                          final File source) {
-        this(dataFormat, delimiter, dateFormat, null, source);
-    }
-    
-    public CSVFileHandler(final CSVType[] dataFormat,
-                          final String delimiter,
-                          final NumberFormat floatFormat,
-                          final File source) {
-        this(dataFormat, delimiter, null, floatFormat, source);
+        this(null, null, null, null);
     }
     
     public CSVFileHandler(final CSVType[] dataFormat,
                           final String delimiter) {
-        this(dataFormat, delimiter, null, null, null);
+        this(dataFormat, delimiter, null, null);
     }
 
     public CSVFileHandler(final CSVType[] dataFormat,
                           final String delimiter,
                           final SimpleDateFormat dateFormat) {
-        this(dataFormat, delimiter, dateFormat, null, null);
+        this(dataFormat, delimiter, dateFormat, null);
     }
 
     public CSVFileHandler(final CSVType[] dataFormat,
                           final String delimiter,
                           final NumberFormat floatFormat) {
-        this(dataFormat, delimiter, null, floatFormat, null);
+        this(dataFormat, delimiter, null, floatFormat);
     }
     
     public CSVFileHandler(final CSVType[] dataFormat,
                           final String delimiter,
                           final SimpleDateFormat dateFormat,
-                          final NumberFormat floatFormat
-            ) {
-        this(dataFormat, delimiter, dateFormat, floatFormat, null);
-    }
-    
-    public CSVFileHandler(final CSVType[] dataFormat,
-                          final String delimiter,
-                          final SimpleDateFormat dateFormat,
-                          final NumberFormat floatFormat,
-                          final File source) {
+                          final NumberFormat floatFormat) {
         if (delimiter == null)
             throw new IllegalArgumentException("Invalid CSV delimiter: null");
         if (delimiter.length() > 1 || delimiter.isEmpty())
@@ -104,16 +74,15 @@ public class CSVFileHandler implements Cloneable {
         
         // TODO: format ellenörzése, mást is tartalmaz mint S,N vagy D
         
-        this.file = source;
         this.format = dataFormat;
         this.sep = delimiter;
         this.dateFormat = dateFormat;
         this.floatFormat = floatFormat;
     }
     
-    public List<CSVRecord> parse() throws IOException, CSVLineException{
+    public List<CSVRecord> parse(File source) throws IOException, CSVLineException{
         BufferedReader sourceReader = new BufferedReader(new InputStreamReader(
-                new FileInputStream(this.file), "UTF-8"));
+                new FileInputStream(source), "UTF-8"));
         
         // rendszer független, akár egy fájlon belül is változhat a sor vég, akkor is müködik
         // elvileg
@@ -160,10 +129,10 @@ public class CSVFileHandler implements Cloneable {
         return out;
     }
     
-    public void print(List<CSVRecord> data)
+    public void print(File target, List<CSVRecord> data)
             throws IOException, CSVFormatException{
         BufferedWriter targetWriter = new BufferedWriter(new OutputStreamWriter(
-                new FileOutputStream(this.file), "UTF-8"));
+                new FileOutputStream(target), "UTF-8"));
         
         Map<Integer, String> rHeader = reverseHeader();
         
@@ -308,14 +277,6 @@ public class CSVFileHandler implements Cloneable {
         this.header = header;
     }
     
-    public File getFile() {
-        return file;
-    }
-
-    public void setFile(File file) {
-        this.file = file;
-    }
-
     public CSVFileHandler clone() {
         try {
             return (CSVFileHandler) super.clone();
